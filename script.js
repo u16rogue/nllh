@@ -20,15 +20,6 @@ const $ = (id, action = null) =>
 const CANVAS_WIDTH  = 800;
 const CANVAS_HEIGHT = 600;
 
-const PLAYER_SPRITE_WIDTH  = 64;
-const PLAYER_SPRITE_HEIGHT = 64;
-
-let CANVAS_CENTER_X = CANVAS_WIDTH  / 2;
-let CANVAS_CENTER_Y = CANVAS_HEIGHT / 2;
-
-let PLAYER_CENTER_X = PLAYER_SPRITE_WIDTH  / 2;
-let PLAYER_CENTER_Y = PLAYER_SPRITE_HEIGHT / 2;
-
 let state = {
     interval : 0,
     mouse    : {
@@ -157,8 +148,8 @@ let player = {
         canvas.context.strokeStyle = "rgb(255, 255, 255)";
 
         let p_abs = {
-            x : player.x - PLAYER_CENTER_X,
-            y : player.y - PLAYER_CENTER_Y
+            x : player.x - player.sprite.base.width / 2,
+            y : player.y - player.sprite.base.height / 2,
         };
 
         if (player.weapon == null)
@@ -288,11 +279,10 @@ const event_resize = () =>
 
 const event_load_complete = () =>
 {
-    player.x = CANVAS_CENTER_X;
-    player.y = CANVAS_CENTER_Y;
+    player.x = canvas.element.width / 2;
+    player.y = canvas.element.height / 2;
 
-    if (DEBUG)
-        player.weapon = debug_weapon;
+    if (DEBUG) player.weapon = debug_weapon;
 };
 
 const event_render = () =>
