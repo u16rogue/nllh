@@ -46,18 +46,6 @@ let canvas = {
     context : null
 };
 
-/*
-bullet = {
-    origin : {
-        x, y, time
-    },
-    own : true,
-    lifespan : 3000,
-    direction : {
-        x, y
-    }
-};
-*/
 let bullets = [];
 
 const util_in_canvas_bound = (x, y) =>
@@ -246,7 +234,7 @@ let player = {
         }
         else if (player.last_move != 0 && !has_moved) // has stopped moving
         {
-            player.last_move = 0;
+            player.last_move = 0; // TODO: this is why deaccel isnt working, should track this somewhere else
         }
 
         // TODO: should prolly use some linear smoothing for this
@@ -326,12 +314,17 @@ const event_update = (ratio) =>
     // Update bullets
     let i = 0;
     bullets.forEach(bullet => {
+        const n_x = bullet.position.x + (bullet.speed * ratio * bullet.direction.x);
+        const n_y = bullet.position.y + (bullet.speed * ratio * bullet.direction.y);
+        
+        // Interpolate hitscan from bullet.position to n_x/y
+
         bullet.position = {
-            x : bullet.position.x + (bullet.speed * ratio * bullet.direction.x),
-            y : bullet.position.y + (bullet.speed * ratio * bullet.direction.y),
+            x : n_x,
+            y : n_y,
         };
 
-        if (!util_in_canvas_bound(bullet.position.x, bullet.position.y))
+        if (!util_in_canvas_bound(n_x, n_y))
             bullets.splice(i, 1);
         ++i;
     });
