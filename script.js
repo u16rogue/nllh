@@ -130,7 +130,7 @@ let debug_weapon = {
             },
             sprite : debug_weapon.bullet_sprite,
             own : true,
-            speed : 200,
+            speed : 600,
             direction : bdir
         });
     },
@@ -319,6 +319,17 @@ const event_update = (ratio) =>
     player.update(ratio);
 
     // Update bullets
+    let i = 0;
+    bullets.forEach(bullet => {
+        bullet.position = {
+            x : bullet.position.x + (bullet.speed * ratio * bullet.direction.x),
+            y : bullet.position.y + (bullet.speed * ratio * bullet.direction.y),
+        };
+
+        if (!util_in_canvas_bound(bullet.position.x, bullet.position.y))
+            bullets.splice(i, 1);
+        ++i;
+    });
 
 };
 
