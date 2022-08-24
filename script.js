@@ -98,7 +98,10 @@ let player = {
         };
 
         canvas.context.drawImage(player.sprite.base, p_abs.x, p_abs.y);
-        canvas.context.drawImage(player.sprite.eyes, p_abs.x, p_abs.y);
+        
+        // Track player mouse
+        const p2m_unit = util_math_normalize_towards(player, state.mouse);
+        canvas.context.drawImage(player.sprite.eyes, p_abs.x + (p2m_unit.x * 1.0), p_abs.y + (p2m_unit.y * 1.0));
 
         // DEBUG
         if (DEBUG)
