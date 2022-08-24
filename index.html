@@ -14,9 +14,12 @@
     <script src="./script.js" defer></script>
 </head>
 <body>
+    <p id="resowarning" class="resowarning">Warning: Your resolution might be a bit too small to properly display the canvas</p>
     <div id="topnav" class="topnav">
-        <p id="resowarning" style="display: none;">Warning: Your resolution might be a bit small to properly display the canvas</p>
     </div>
+
+    <!-- Box shadow buffer -->
+    <div id="topnav_shadow_buffer" style="width: 100%; height: 20px;"></div>
 
     <div id="displaybox" class="displaybox">
         <div id="jswarning" class="jswarning">Please enable javacript!</div>

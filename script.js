@@ -27,11 +27,12 @@ $('jswarning', (d) =>
     addEventListener('resize', event_resize);
 
     // Create canvas - http://www.lostdecadegames.com/how-to-make-a-simple-html5-canvas-game/ 
-    canvas.element = document.createElement("canvas");
-    canvas.context = canvas.element.getContext("2d");
+    canvas.element = document.createElement('canvas');
+    canvas.context = canvas.element.getContext('2d');
 
     canvas.element.width  = CANVAS_WIDTH;
     canvas.element.height = CANVAS_HEIGHT;
+    canvas.element.classList.add('canvasstyle');
     $('canvascont', (cc) => { cc.appendChild(canvas.element); });
 
     // Check reso
