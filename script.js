@@ -107,8 +107,8 @@ let debug_weapon = {
         debug_weapon.next_shot = state.interval + debug_weapon.cooldown;
         
         const bdir = util_math_normalize_towards(player, state.mouse);
-        const b_x = player.x + (bdir.x * 38);
-        const b_y = player.y + (bdir.y * 38);
+        const b_x = player.x + (bdir.x * 25);
+        const b_y = player.y + debug_weapon.offset.y + (bdir.y * 25);
 
         bullets.push({
             origin : {
@@ -156,7 +156,6 @@ let player = {
         canvas.context.fillStyle = "rgb(255, 255, 255)";
         canvas.context.strokeStyle = "rgb(255, 255, 255)";
 
-
         let p_abs = {
             x : player.x - PLAYER_CENTER_X,
             y : player.y - PLAYER_CENTER_Y
@@ -203,11 +202,11 @@ let player = {
             */
 
             canvas.context.fillText(
-                "DEBUG >> Speed: " + player.speed +
+                "DEBUG >> Speed: " + Math.round(player.speed) +
                 " m_x:" + state.mouse.x +
                 " m_y:" + state.mouse.y +
-                " p_x:" + p_abs.x +
-                " p_y:" + p_abs.y +
+                " p_x:" + Math.round(p_abs.x) +
+                " p_y:" + Math.round(p_abs.y) +
                 " n_bullets:" + bullets.length/*+
                 " t_x:" + test_dir.x +
                 " t_y:" + test_dir.y */
