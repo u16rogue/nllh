@@ -1,5 +1,9 @@
 // i dont javascript
 
+// TODO: cleanup
+// TODO: refactor. should use classes and separate everything in their own JS
+// TODO: refactor. object management should be proper
+
 const DEBUG = true;
 
 const $ = (id, action = null) =>
@@ -110,7 +114,7 @@ let debug_weapon = {
     event_attack : () =>
     {
         if (debug_weapon.next_shot > state.interval) 
-            return; 
+            return false;
         
         debug_weapon.next_shot = state.interval + debug_weapon.cooldown;
         
@@ -133,10 +137,11 @@ let debug_weapon = {
             speed : 600,
             direction : bdir
         });
+        return true;
     },
     event_stopattack : () =>
     {
-
+        return true;
     },
 };
 
