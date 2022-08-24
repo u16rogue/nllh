@@ -48,6 +48,8 @@ body
     width: 100%;
     text-align: center;
     margin: auto;
+    background-color: red;
+    color: white;
 }
 
 .topnav
