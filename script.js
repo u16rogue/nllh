@@ -76,10 +76,25 @@ const util_math_forward_towards = (p1, p2, distance) =>
     };
 };
 
+const util_math_vun_to_deg = (p) =>
+{
+    return Math.atan2(p.x, p.y) * 180 / Math.PI;
+};
+
+let debug_weapon = {
+    sprite : new Image(),
+    offset : {
+        x : 0,
+        y : 10
+    },
+    event_attack : () => {}
+};
+
 let player = {
     sprite : {
         base : new Image(),
-        eyes : new Image()
+        eyes : new Image(),
+        arms : new Image(),
     },
     x      : 0,
     y      : 0,
@@ -90,33 +105,59 @@ let player = {
     last_move : 0,
     accelerate_time_ms : 600,
 
+    weapon : null,
+
     render : () =>
     {
+        canvas.context.fillStyle = "rgb(255, 255, 255)";
+        canvas.context.strokeStyle = "rgb(255, 255, 255)";
+
+
         let p_abs = {
             x : player.x - PLAYER_CENTER_X,
             y : player.y - PLAYER_CENTER_Y
         };
 
+        if (player.weapon == null)
+            canvas.context.drawImage(player.sprite.arms, p_abs.x, p_abs.y);
         canvas.context.drawImage(player.sprite.base, p_abs.x, p_abs.y);
         
         // Track player mouse
         const p2m_unit = util_math_normalize_towards(player, state.mouse);
         canvas.context.drawImage(player.sprite.eyes, p_abs.x + (p2m_unit.x * 1.0), p_abs.y + (p2m_unit.y * 1.0));
 
+        const weapon = player.weapon;
+        if (weapon != null)
+        {
+            let winfo = {
+                x : p_abs.x + weapon.offset.x,
+                y : p_abs.y + weapon.offset.y,
+                w : weapon.sprite.width,
+                h : weapon.sprite.height
+            };
+            canvas.context.save();
+            canvas.context.translate(winfo.x + (winfo.w / 2), winfo.y + (winfo.h / 2));
+            const deg = util_math_vun_to_deg(p2m_unit);
+            canvas.context.rotate(-(deg - 90) * Math.PI / 180);
+            if (deg < 0)
+                canvas.context.scale(1, -1);
+            canvas.context.drawImage(weapon.sprite, -winfo.w / 2, -winfo.h / 2);
+            canvas.context.restore();
+        }
+
         // DEBUG
         if (DEBUG)
         {
-            canvas.context.fillStyle = "rgb(255, 255, 255)";
-            canvas.context.strokeStyle = "rgb(255, 255, 255)";
-
             /*
+            
             canvas.context.beginPath();
             canvas.context.moveTo(player.x, player.y);
-            const test_dir = util_math_forward_towards(player, state.mouse, 200);
+            const test_dir = util_math_forward_towards(player, state.mouse, 50);
             canvas.context.lineTo(test_dir.x, test_dir.y);
             canvas.context.closePath();
             canvas.context.stroke();
             */
+
             canvas.context.fillText(
                 "DEBUG >> Speed: " + player.speed +
                 " m_x:" + state.mouse.x +
@@ -191,6 +232,9 @@ const event_load_complete = () =>
 {
     player.x = CANVAS_CENTER_X;
     player.y = CANVAS_CENTER_Y;
+
+    if (DEBUG)
+        player.weapon = debug_weapon;
 };
 
 const event_render = () =>
@@ -218,7 +262,7 @@ const event_game_loop = () =>
     window.requestAnimationFrame(event_game_loop);
 };
 
-const PROGRESS_TOTAL = 2;
+const PROGRESS_TOTAL = 4;
 let   load_progress  = 0;
 let   has_loaded     = false;
 
@@ -277,6 +321,11 @@ $('jswarning', (d) =>
     player.sprite.eyes.onload = () => { commit_progress(); };
     player.sprite.eyes.src = './assets/sprites/nanahi_eyes.png';
 
+    player.sprite.arms.onload = () => { commit_progress(); };
+    player.sprite.arms.src = './assets/sprites/nanahi_arms.png';
+
+    debug_weapon.sprite.onload = () => { commit_progress(); };
+    debug_weapon.sprite.src = './assets/sprites/test_weapon.png';
 
     // Wait for everything to load then Trigger event loop
     console.log('Waiting for everything to load...');
