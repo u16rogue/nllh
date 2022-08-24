@@ -1,3 +1,5 @@
+// i dont javascript
+
 const DEBUG = true;
 
 const $ = (id, action = null) =>
@@ -23,21 +25,36 @@ let CANVAS_CENTER_Y = CANVAS_HEIGHT / 2;
 let PLAYER_CENTER_X = PLAYER_SPRITE_WIDTH  / 2;
 let PLAYER_CENTER_Y = PLAYER_SPRITE_HEIGHT / 2;
 
-let keys = {};
-
 let state = {
     interval : 0,
     mouse    : {
         x       : 0,
         y       : 0,
-        capture : false
-    }
+        capture : false,
+        m1      : false,
+        m2      : false,
+    },
+    keys : {},
 };
 
 let canvas = {
     element : null,
     context : null
 };
+
+/*
+bullet = {
+    origin : {
+        x, y, time
+    },
+    own : true,
+    lifespan : 3000,
+    direction : {
+        x, y
+    }
+};
+*/
+let bullets = [];
 
 const util_in_canvas_bound = (x, y) =>
 {
@@ -83,11 +100,44 @@ const util_math_vun_to_deg = (p) =>
 
 let debug_weapon = {
     sprite : new Image(),
+    bullet_sprite : new Image(),
     offset : {
         x : 0,
         y : 10
     },
-    event_attack : () => {}
+    next_shot : 0,
+    cooldown : 200,
+    event_attack : () =>
+    {
+        if (debug_weapon.next_shot > state.interval) 
+            return; 
+        
+        debug_weapon.next_shot = state.interval + debug_weapon.cooldown;
+        
+        const bdir = util_math_normalize_towards(player, state.mouse);
+        const b_x = player.x + (bdir.x * 38);
+        const b_y = player.y + (bdir.y * 38);
+
+        bullets.push({
+            origin : {
+                x : b_x,
+                y : b_y,
+                time : state.interval
+            },
+            position : {
+                x : b_x,
+                y : b_y,
+            },
+            sprite : debug_weapon.bullet_sprite,
+            own : true,
+            speed : 200,
+            direction : bdir
+        });
+    },
+    event_stopattack : () =>
+    {
+
+    },
 };
 
 let player = {
@@ -103,7 +153,8 @@ let player = {
     min_speed : 80,
     max_speed : 300,
     last_move : 0,
-    accelerate_time_ms : 600,
+    attacking : false,
+    accelerate_time_ms : 300,
 
     weapon : null,
 
@@ -163,23 +214,24 @@ let player = {
                 " m_x:" + state.mouse.x +
                 " m_y:" + state.mouse.y +
                 " p_x:" + p_abs.x +
-                " p_y:" + p_abs.y /*+
+                " p_y:" + p_abs.y +
+                " n_bullets:" + bullets.length/*+
                 " t_x:" + test_dir.x +
                 " t_y:" + test_dir.y */
-                , 20, CANVAS_HEIGHT - 5);
+                , 5, CANVAS_HEIGHT - 5);
         }
     },
     update : (ratio) =>
     {
         let n_x = player.x;
         let n_y = player.y;
-        if ('w' in keys)
+        if ('w' in state.keys)
             n_y -= player.speed * ratio;
-        if ('s' in keys)
+        if ('s' in state.keys)
             n_y += player.speed * ratio;
-        if ('a' in keys)
+        if ('a' in state.keys)
             n_x -= player.speed * ratio;
-        if ('d' in keys)
+        if ('d' in state.keys)
             n_x += player.speed * ratio;
 
         const has_moved = n_x != player.x || n_y != player.y;
@@ -218,6 +270,20 @@ let player = {
             player.x = n_x;
             player.y = n_y;
         }
+
+        if (player.weapon != null)
+        {
+            if (state.mouse.m1)
+            {
+                player.weapon.event_attack();
+                player.attacking = true;
+            }
+            else if (!state.mouse.m1 && player.attacking)
+            {
+                player.weapon.event_stopattack();
+                player.attacking = false;
+            }
+        }
     }
 };
 
@@ -241,11 +307,19 @@ const event_render = () =>
 {
     canvas.context.clearRect(0, 0, canvas.element.width, canvas.element.height);
     player.render();
+
+    // Render bullets
+    bullets.forEach(bullet => {
+        canvas.context.drawImage(bullet.sprite, bullet.position.x - (bullet.sprite.width / 2), bullet.position.y - (bullet.sprite.height / 2));
+    });
 };
 
 const event_update = (ratio) =>
 {
     player.update(ratio);
+
+    // Update bullets
+
 };
 
 let prev = Date.now();
@@ -262,7 +336,7 @@ const event_game_loop = () =>
     window.requestAnimationFrame(event_game_loop);
 };
 
-const PROGRESS_TOTAL = 4;
+const PROGRESS_TOTAL = 5;
 let   load_progress  = 0;
 let   has_loaded     = false;
 
@@ -295,8 +369,18 @@ $('jswarning', (d) =>
     canvas.element.classList.add('canvasstyle');
     $('canvascont', (cc) => { cc.appendChild(canvas.element); });
 
-    addEventListener('keydown', (e) => { keys[e.key] = true;});
-    addEventListener('keyup', (e) => { delete keys[e.key]; });
+    addEventListener('keydown', (e) => { state.keys[e.key] = true;});
+    addEventListener('keyup', (e) => { delete state.keys[e.key]; });
+    document.body.onmousedown = (e) =>
+    {
+        if (e.button == 0)
+            state.mouse.m1 = true;
+    };
+    document.body.onmouseup = (e) =>
+    {
+        if (e.button == 0)
+            state.mouse.m1 = false;
+    };
     addEventListener('mousemove', (e) =>
     {
         const bcr = canvas.element.getBoundingClientRect();
@@ -326,6 +410,9 @@ $('jswarning', (d) =>
 
     debug_weapon.sprite.onload = () => { commit_progress(); };
     debug_weapon.sprite.src = './assets/sprites/test_weapon.png';
+
+    debug_weapon.bullet_sprite.onload = () => { commit_progress(); };
+    debug_weapon.bullet_sprite.src = './assets/sprites/test_bullet.png';
 
     // Wait for everything to load then Trigger event loop
     console.log('Waiting for everything to load...');
