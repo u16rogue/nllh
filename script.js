@@ -50,7 +50,7 @@ const util_math_distance = (p1, p2) =>
 
 const util_math_normalize_towards = (p1, p2) =>
 {
-    const dist = util_math_distance(p2, p1);
+    const dist = util_math_distance(p1, p2);
     return {
         x: (p2.x - p1.x) / dist,
         y: (p2.y - p1.y) / dist
@@ -96,9 +96,10 @@ let debug_weapon = {
         
         debug_weapon.next_shot = state.interval + debug_weapon.cooldown;
         
+        const BULLET_SPAWN_OFFSET = 25;
         const bdir = util_math_normalize_towards(player, state.mouse);
-        const b_x = player.x + (bdir.x * 25);
-        const b_y = player.y + debug_weapon.offset.y + (bdir.y * 25);
+        const b_x = player.x + (bdir.x * BULLET_SPAWN_OFFSET);
+        const b_y = player.y + debug_weapon.offset.y + (bdir.y * BULLET_SPAWN_OFFSET);
 
         bullets.push({
             origin : {
@@ -124,7 +125,7 @@ let debug_weapon = {
 };
 
 let player = {
-    sprite : {
+    sprites : {
         base : new Image(),
         eyes : new Image(),
         arms : new Image(),
@@ -147,17 +148,17 @@ let player = {
         canvas.context.strokeStyle = "rgb(255, 255, 255)";
 
         let p_abs = {
-            x : player.x - player.sprite.base.width / 2,
-            y : player.y - player.sprite.base.height / 2,
+            x : player.x - player.sprites.base.width / 2,
+            y : player.y - player.sprites.base.height / 2,
         };
 
         if (player.weapon == null)
-            canvas.context.drawImage(player.sprite.arms, p_abs.x, p_abs.y);
-        canvas.context.drawImage(player.sprite.base, p_abs.x, p_abs.y);
+            canvas.context.drawImage(player.sprites.arms, p_abs.x, p_abs.y);
+        canvas.context.drawImage(player.sprites.base, p_abs.x, p_abs.y);
         
         // Track player mouse
         const p2m_unit = util_math_normalize_towards(player, state.mouse);
-        canvas.context.drawImage(player.sprite.eyes, p_abs.x + (p2m_unit.x * 1.0), p_abs.y + (p2m_unit.y * 1.0));
+        canvas.context.drawImage(player.sprites.eyes, p_abs.x + (p2m_unit.x * 1.0), p_abs.y + (p2m_unit.y * 1.0));
 
         const weapon = player.weapon;
         if (weapon != null)
@@ -404,14 +405,14 @@ $('jswarning', (d) =>
     // Check reso
     event_resize();
 
-    player.sprite.base.onload = () => { commit_progress(); };
-    player.sprite.base.src = './assets/sprites/nanahi_base.png';
+    player.sprites.base.onload = () => { commit_progress(); };
+    player.sprites.base.src = './assets/sprites/nanahi_base.png';
 
-    player.sprite.eyes.onload = () => { commit_progress(); };
-    player.sprite.eyes.src = './assets/sprites/nanahi_eyes.png';
+    player.sprites.eyes.onload = () => { commit_progress(); };
+    player.sprites.eyes.src = './assets/sprites/nanahi_eyes.png';
 
-    player.sprite.arms.onload = () => { commit_progress(); };
-    player.sprite.arms.src = './assets/sprites/nanahi_arms.png';
+    player.sprites.arms.onload = () => { commit_progress(); };
+    player.sprites.arms.src = './assets/sprites/nanahi_arms.png';
 
     debug_weapon.sprite.onload = () => { commit_progress(); };
     debug_weapon.sprite.src = './assets/sprites/test_weapon.png';
