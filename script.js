@@ -1,5 +1,3 @@
-// i dont javascript
-
 // TODO: cleanup
 // TODO: refactor. should use classes and separate everything in their own JS
 // TODO: refactor. object management should be proper
@@ -30,6 +28,7 @@ let state = {
         m2      : false,
     },
     keys : {},
+    pause : false,
 };
 
 let canvas = {
@@ -294,6 +293,8 @@ const event_render = () =>
     bullets.forEach(bullet => {
         canvas.context.drawImage(bullet.sprite, bullet.position.x - (bullet.sprite.width / 2), bullet.position.y - (bullet.sprite.height / 2));
     });
+
+    // TODO: render pause banner thing
 };
 
 const event_update = (ratio) =>
@@ -325,11 +326,12 @@ const event_game_loop = () =>
 {
     const now   = Date.now();
     const delta = now - prev;
-    state.interval += delta;
-    state.m_x
-
-    event_update(delta / 1000);
-    event_render();
+    if (!state.pause)
+    {
+        state.interval += delta;
+        event_update(delta / 1000);
+        event_render();
+    }
     prev = now;
     window.requestAnimationFrame(event_game_loop);
 };
@@ -367,7 +369,16 @@ $('jswarning', (d) =>
     canvas.element.classList.add('canvasstyle');
     $('canvascont', (cc) => { cc.appendChild(canvas.element); });
 
-    addEventListener('keydown', (e) => { state.keys[e.key] = true;});
+    addEventListener('keydown', (e) =>
+    {
+        if (e.key == 'Escape')
+        {
+            state.pause = !state.pause;
+            return;
+        }
+
+        state.keys[e.key] = true;
+    });
     addEventListener('keyup', (e) => { delete state.keys[e.key]; });
     document.body.onmousedown = (e) =>
     {
@@ -386,12 +397,8 @@ $('jswarning', (d) =>
         const n_y = e.clientY - bcr.top;
         
         state.mouse.capture = n_x >= 0 && n_x <= CANVAS_WIDTH && n_y >= 0 && n_y <= CANVAS_HEIGHT;
-        if (state.mouse.capture)
-        {
-            state.mouse.x = n_x;
-            state.mouse.y = n_y;
-        }
-
+        state.mouse.x = n_x;
+        state.mouse.y = n_y;
     });
 
     // Check reso
