@@ -4,6 +4,13 @@
 
 const DEBUG = true;
 
+const CANVAS_WIDTH  = 800;
+const CANVAS_HEIGHT = 600;
+
+const STONE_WALL_THICKNESS = 60; // This affects the boundary calculation
+const STONE_WALL_LEISURE   = -10; // so basically it would not look great if we immediately stop when hitting the literal edge of a wall, this gives us a little bit of space.
+                                  // why is it separate? because the thickness defines the drawing size while this subtracts and creates the actual bounding size or what ever its called
+
 const $ = (id, action = null) =>
 {
     let obj = document.getElementById(id) ?? document.getElementsByClassName(id);
@@ -14,9 +21,6 @@ const $ = (id, action = null) =>
         return obj;
     return action(obj);
 };
-
-const CANVAS_WIDTH  = 800;
-const CANVAS_HEIGHT = 600;
 
 let state = {
     interval : 0,
@@ -33,7 +37,11 @@ let state = {
         dirt : {
             sprite : new Image(),
             pattern : null
-        }
+        },
+        stone : {
+            sprite : new Image(),
+            pattern : null
+        },
     },
 };
 
@@ -317,6 +325,7 @@ const event_load_complete = () =>
     player.sprites.legs.sprite = player.sprites.legs.idle;
     player.sprites.hairband.sprite = player.sprites.hairband.idle;
     state.resources.dirt.pattern = canvas.context.createPattern(state.resources.dirt.sprite, 'repeat');
+    state.resources.stone.pattern = canvas.context.createPattern(state.resources.stone.sprite, 'repeat');
 
     if (DEBUG) player.weapon = debug_weapon;
 };
@@ -328,6 +337,17 @@ const event_render = () =>
     // Render ground
     canvas.context.fillStyle = state.resources.dirt.pattern;
     canvas.context.fillRect(0, 0, canvas.element.width, canvas.element.height);
+
+    // Render walls
+    canvas.context.fillStyle = state.resources.stone.pattern;
+    // Top walls
+    canvas.context.fillRect(0, 0, canvas.element.width, STONE_WALL_THICKNESS);
+    // Left walls
+    canvas.context.fillRect(0, STONE_WALL_THICKNESS, STONE_WALL_THICKNESS, canvas.element.height - STONE_WALL_THICKNESS);
+    // Right walls
+    canvas.context.fillRect(canvas.element.width - STONE_WALL_THICKNESS, STONE_WALL_THICKNESS, STONE_WALL_THICKNESS, canvas.element.height - STONE_WALL_THICKNESS);
+    // Bottom walls
+    canvas.context.fillRect(STONE_WALL_THICKNESS, canvas.element.height - STONE_WALL_THICKNESS, canvas.element.width - (STONE_WALL_THICKNESS * 2), STONE_WALL_THICKNESS);
 
     player.render();
 
@@ -462,7 +482,7 @@ $('jswarning', (d) =>
     let leg_cycle0 = new Image();
     leg_cycle0.onload = commit_progress;
     leg_cycle0.src = './assets/sprites/nanahi_walk_0.png';
-
+ 
     let leg_cycle1 = new Image();
     leg_cycle1.onload = commit_progress;
     leg_cycle1.src = './assets/sprites/nanahi_walk_1.png';
@@ -470,7 +490,7 @@ $('jswarning', (d) =>
     player.sprites.legs.cycle.push(leg_cycle0);
     player.sprites.legs.cycle.push(leg_cycle1);
 
-    for(let i = 0; i < 3; ++i)
+    for (let i = 0; i < 3; ++i)
     {
         let hairband_cycle = new Image();
         hairband_cycle.onload = commit_progress;
@@ -493,6 +513,9 @@ $('jswarning', (d) =>
 
     state.resources.dirt.sprite.onload = commit_progress;
     state.resources.dirt.sprite.src = './assets/sprites/dirt.png';
+
+    state.resources.stone.sprite.onload = commit_progress;
+    state.resources.stone.sprite.src = './assets/sprites/stone_wall.png';
 
     // Wait for everything to load then Trigger event loop
     console.log('Waiting for everything to load...');
