@@ -3,6 +3,7 @@
 // TODO: refactor. object management should be proper
 
 // TODO: add recoil and slow player when shooting so player wont just spam hold fire
+// TODO: proper bullet sprite
 
 const DEBUG = true;
 
@@ -108,7 +109,7 @@ const util_math_vun_to_deg = (p) =>
     return Math.atan2(p.x, p.y) * 180 / Math.PI;
 };
 
-const util_spawn_bullet = (x_, y_, own_, speed_, sprite_, dir_) =>
+const util_spawn_bullet = (x_, y_, own_, speed_, sprite_, dir_, oriented_) =>
 {
     bullets.push({
         origin : {
@@ -123,7 +124,8 @@ const util_spawn_bullet = (x_, y_, own_, speed_, sprite_, dir_) =>
         sprite : sprite_,
         own : own_,
         speed : speed_,
-        direction : dir_
+        direction : dir_,
+        is_oriented : oriented_ // This will run calculation to proper align the angle of the shot to path, incase we have a circle projectiles we dont need the expensive math for that
     });
 }
 
@@ -148,7 +150,7 @@ let debug_weapon = {
         const b_x = player.x + (bdir.x * BULLET_SPAWN_OFFSET);
         const b_y = player.y + debug_weapon.offset.y + (bdir.y * BULLET_SPAWN_OFFSET);
 
-        util_spawn_bullet(b_x, b_y, true, 600, debug_weapon.bullet_sprite, bdir);
+        util_spawn_bullet(b_x, b_y, true, 600, debug_weapon.bullet_sprite, bdir, false);
         return true;
     },
     event_stopattack : () =>
@@ -313,7 +315,7 @@ let player = {
             player.y = n_y;
         }
 
-        if (player.weapon != null)
+        if (player.weapon != null && state.mouse.capture)
         {
             if (state.mouse.m1)
             {
