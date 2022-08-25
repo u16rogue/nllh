@@ -2,14 +2,16 @@
 // TODO: refactor. should use classes and separate everything in their own JS
 // TODO: refactor. object management should be proper
 
+// TODO: add recoil and slow player when shooting so player wont just spam hold fire
+
 const DEBUG = true;
 
 const CANVAS_WIDTH  = 800;
 const CANVAS_HEIGHT = 600;
 
-const STONE_WALL_THICKNESS = 60;  // This affects the boundary calculation
-const STONE_WALL_LEISURE   = -5; // so basically it would not look great if we immediately stop when hitting the literal edge of a wall, this gives us a little bit of space.
-                                  // why is it separate? because the thickness defines the drawing size while this subtracts and creates the actual bounding size
+const STONE_WALL_THICKNESS = 60; // This affects the boundary calculation
+const STONE_WALL_LEISURE   = -5; // it would not look great if we immediately stop when hitting the literal edge of a wall, this gives us a little bit of space.
+                                 // why is it separate? because the thickness defines the drawing size while this subtracts and creates the actual bounding size
 
 const $ = (id, action = null) =>
 {
@@ -51,6 +53,8 @@ let canvas = {
 };
 
 let bullets = [];
+let graves = []; // enemy spawn points
+let enemies = [];
 
 const util_in_canvas_bound = (x, y) =>
 {
@@ -98,6 +102,25 @@ const util_math_vun_to_deg = (p) =>
     return Math.atan2(p.x, p.y) * 180 / Math.PI;
 };
 
+const util_spawn_bullet = (x_, y_, own_, speed_, sprite_, dir_) =>
+{
+    bullets.push({
+        origin : {
+            x : x_,
+            y : y_,
+            time : state.interval
+        },
+        position : {
+            x : x_,
+            y : y_,
+        },
+        sprite : sprite_,
+        own : own_,
+        speed : speed_,
+        direction : dir_
+    });
+}
+
 let debug_weapon = {
     sprite : new Image(),
     bullet_sprite : new Image(),
@@ -119,21 +142,7 @@ let debug_weapon = {
         const b_x = player.x + (bdir.x * BULLET_SPAWN_OFFSET);
         const b_y = player.y + debug_weapon.offset.y + (bdir.y * BULLET_SPAWN_OFFSET);
 
-        bullets.push({
-            origin : {
-                x : b_x,
-                y : b_y,
-                time : state.interval
-            },
-            position : {
-                x : b_x,
-                y : b_y,
-            },
-            sprite : debug_weapon.bullet_sprite,
-            own : true,
-            speed : 600,
-            direction : bdir
-        });
+        util_spawn_bullet(b_x, b_y, true, 600, debug_weapon.bullet_sprite, bdir);
         return true;
     },
     event_stopattack : () =>
