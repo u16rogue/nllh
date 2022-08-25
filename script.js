@@ -240,12 +240,16 @@ let player = {
         {
             player.last_move = 0; // TODO: this is why deaccel isnt working, should track this somewhere else
             player.sprites.legs.sprite = player.sprites.legs.idle;
+            player.sprites.hairband.sprite = player.sprites.hairband.idle;
         }
 
         if (has_moved)
         {
-            const CYCLE_TIME = 400;
-            player.sprites.legs.sprite = player.sprites.legs.cycle[Math.floor((state.interval % CYCLE_TIME / (CYCLE_TIME / player.sprites.legs.cycle.length)))];
+            const LEG_CYCLE_TIME = 400;
+            player.sprites.legs.sprite = player.sprites.legs.cycle[Math.floor((state.interval % LEG_CYCLE_TIME / (LEG_CYCLE_TIME / player.sprites.legs.cycle.length)))];
+
+            const HAIRBAND_CYCLE_TIME = 400;
+            player.sprites.hairband.sprite = player.sprites.hairband.cycle[Math.floor((state.interval % HAIRBAND_CYCLE_TIME / (HAIRBAND_CYCLE_TIME / player.sprites.hairband.cycle.length)))];
         }
 
         // TODO: should prolly use some linear smoothing for this
@@ -360,7 +364,7 @@ const event_game_loop = () =>
     window.requestAnimationFrame(event_game_loop);
 };
 
-const PROGRESS_TOTAL = 9;
+const PROGRESS_TOTAL = 12;
 let   load_progress  = 0;
 let   has_loaded     = false;
 
@@ -440,6 +444,7 @@ $('jswarning', (d) =>
     player.sprites.legs.idle.onload = () => { commit_progress(); };
     player.sprites.legs.idle.src = './assets/sprites/nanahi_walk_idle.png';
 
+    // TODO: should just loop this lol
     let leg_cycle0 = new Image();
     leg_cycle0.onload = () => { commit_progress(); };
     leg_cycle0.src = './assets/sprites/nanahi_walk_0.png';
@@ -450,6 +455,19 @@ $('jswarning', (d) =>
 
     player.sprites.legs.cycle.push(leg_cycle0);
     player.sprites.legs.cycle.push(leg_cycle1);
+
+    for(let i = 0; i < 3; ++i)
+    {
+        let hairband_cycle = new Image();
+        hairband_cycle.onload = () => { commit_progress(); };
+        hairband_cycle.src = `./assets/sprites/nanahi_hairband_${i}.png`;
+        player.sprites.hairband.cycle.push(hairband_cycle);
+    }
+
+    // a proper way to do a reverse cycle is to do math but..
+    for (let i = 1; i >= 0; --i)
+        player.sprites.hairband.cycle.push(player.sprites.hairband.cycle[i]);
+
 
     player.sprites.hairband.idle.onload = () => { commit_progress(); };
     player.sprites.hairband.idle.src = './assets/sprites/nanahi_hairband_idle.png';
