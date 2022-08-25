@@ -117,7 +117,7 @@ const util_math_vun_to_deg = (p) =>
 
 const util_rand_num = (low, high) =>
 {
-    return (Math.floor(Math.random() * high) + low) % high;
+    return (Math.floor(Math.random() * (high - low)) + low);
 };
 
 const util_spawn_bullet = (x_, y_, own_, speed_, sprite_, dir_, hitradius_, oriented_) =>
@@ -386,29 +386,38 @@ const event_load_complete = () =>
         const min_y = 100 + min_x;
         const max_y = canvas.element.height - STONE_WALL_THICKNESS - GRAVE_SIZE;
 
-        let cx = util_rand_num(min_x, max_x);
-        let cy = util_rand_num(min_y, max_y);
+        let cx = 0;
+        let cy = 0;
 
-        // Make sure no graves are on top of each other
-        while (true)
+        // Make sure no graves are on top of each other and it doesnt spawn on the player
+        do
         {
-            let has_too_close = false;
-
-            for (let grave of graves)            
-            {
-                if (util_math_distance({ x : cx, y : cy }, grave) <= GRAVE_SIZE)
-                {
-                    has_too_close = true;
-                    break;
-                }
-            }
-
-            if (!has_too_close)
-                break;
-
             cx = util_rand_num(min_x, max_x);
             cy = util_rand_num(min_y, max_y);
-        }
+
+            if (util_math_distance({ x : cx, y : cy }, player) <= GRAVE_COLLISION_RADIUS)
+            {
+                continue;
+            }
+            else
+            {
+                let has_too_close = false;
+                for (let grave of graves)
+                {
+                    if (util_math_distance({ x : cx, y : cy }, grave) <= GRAVE_COLLISION_RADIUS)
+                    {
+                        has_too_close = true;
+                        break;
+                    }
+                }
+
+                if (has_too_close)
+                    continue;
+            }
+
+            break;
+
+        } while (true);
 
         util_create_enemy_spawn_point(
             cx,
