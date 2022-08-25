@@ -149,6 +149,7 @@ let player = {
     last_move : 0,
     attacking : false,
     accelerate_time_ms : 300,
+    hairband_cycle_time : 1200,
 
     weapon : null,
 
@@ -235,22 +236,22 @@ let player = {
         if (player.last_move == 0 && has_moved) // has not moved previously
         {
             player.last_move = state.interval;
+            player.hairband_cycle_time = 400;
         }
         else if (player.last_move != 0 && !has_moved) // has stopped moving
         {
             player.last_move = 0; // TODO: this is why deaccel isnt working, should track this somewhere else
             player.sprites.legs.sprite = player.sprites.legs.idle;
-            player.sprites.hairband.sprite = player.sprites.hairband.idle;
+            player.hairband_cycle_time = 1200;
         }
 
         if (has_moved)
         {
             const LEG_CYCLE_TIME = 400;
             player.sprites.legs.sprite = player.sprites.legs.cycle[Math.floor((state.interval % LEG_CYCLE_TIME / (LEG_CYCLE_TIME / player.sprites.legs.cycle.length)))];
-
-            const HAIRBAND_CYCLE_TIME = 400;
-            player.sprites.hairband.sprite = player.sprites.hairband.cycle[Math.floor((state.interval % HAIRBAND_CYCLE_TIME / (HAIRBAND_CYCLE_TIME / player.sprites.hairband.cycle.length)))];
         }
+
+        player.sprites.hairband.sprite = player.sprites.hairband.cycle[Math.floor((state.interval % player.hairband_cycle_time / (player.hairband_cycle_time / player.sprites.hairband.cycle.length)))];
 
         // TODO: should prolly use some linear smoothing for this
         // TODO: deaccel is broken
