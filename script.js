@@ -129,6 +129,11 @@ let player = {
         base : new Image(),
         eyes : new Image(),
         arms : new Image(),
+        legs : {
+            sprite : null,
+            idle : new Image(),
+            cycle : [ ]
+        },
     },
     x      : 0,
     y      : 0,
@@ -152,6 +157,7 @@ let player = {
             y : player.y - player.sprites.base.height / 2,
         };
 
+        canvas.context.drawImage(player.sprites.legs.sprite, p_abs.x, p_abs.y);
         if (player.weapon == null)
             canvas.context.drawImage(player.sprites.arms, p_abs.x, p_abs.y);
         canvas.context.drawImage(player.sprites.base, p_abs.x, p_abs.y);
@@ -179,6 +185,7 @@ let player = {
             canvas.context.restore();
         }
 
+        
         // DEBUG
         if (DEBUG)
         {
@@ -198,7 +205,8 @@ let player = {
                 " m_y:" + state.mouse.y +
                 " p_x:" + Math.round(p_abs.x) +
                 " p_y:" + Math.round(p_abs.y) +
-                " n_bullets:" + bullets.length/*+
+                " n_bullets:" + bullets.length +
+                " w_cycle:" + player.sprites.legs.sprite.src/*+
                 " t_x:" + test_dir.x +
                 " t_y:" + test_dir.y */
                 , 5, CANVAS_HEIGHT - 5);
@@ -225,6 +233,13 @@ let player = {
         else if (player.last_move != 0 && !has_moved) // has stopped moving
         {
             player.last_move = 0; // TODO: this is why deaccel isnt working, should track this somewhere else
+            player.sprites.legs.sprite = player.sprites.legs.idle;
+        }
+
+        if (has_moved)
+        {
+            const CYCLE_TIME = 400;
+            player.sprites.legs.sprite = player.sprites.legs.cycle[Math.floor((state.interval % CYCLE_TIME / (CYCLE_TIME / player.sprites.legs.cycle.length)))];
         }
 
         // TODO: should prolly use some linear smoothing for this
@@ -281,6 +296,7 @@ const event_load_complete = () =>
 {
     player.x = canvas.element.width / 2;
     player.y = canvas.element.height / 2;
+    player.sprites.legs.sprite = player.sprites.legs.idle;
 
     if (DEBUG) player.weapon = debug_weapon;
 };
@@ -337,7 +353,7 @@ const event_game_loop = () =>
     window.requestAnimationFrame(event_game_loop);
 };
 
-const PROGRESS_TOTAL = 5;
+const PROGRESS_TOTAL = 8;
 let   load_progress  = 0;
 let   has_loaded     = false;
 
@@ -413,6 +429,20 @@ $('jswarning', (d) =>
 
     player.sprites.arms.onload = () => { commit_progress(); };
     player.sprites.arms.src = './assets/sprites/nanahi_arms.png';
+
+    player.sprites.legs.idle.onload = () => { commit_progress(); };
+    player.sprites.legs.idle.src = './assets/sprites/nanahi_walk_idle.png';
+
+    let leg_cycle0 = new Image();
+    leg_cycle0.onload = () => { commit_progress(); };
+    leg_cycle0.src = './assets/sprites/nanahi_walk_0.png';
+
+    let leg_cycle1 = new Image();
+    leg_cycle1.onload = () => { commit_progress(); };
+    leg_cycle1.src = './assets/sprites/nanahi_walk_1.png';
+
+    player.sprites.legs.cycle.push(leg_cycle0);
+    player.sprites.legs.cycle.push(leg_cycle1);
 
     debug_weapon.sprite.onload = () => { commit_progress(); };
     debug_weapon.sprite.src = './assets/sprites/test_weapon.png';
