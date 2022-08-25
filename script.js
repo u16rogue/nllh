@@ -175,7 +175,7 @@ let debug_weapon = {
         const b_x = player.x + (bdir.x * BULLET_SPAWN_OFFSET);
         const b_y = player.y + debug_weapon.offset.y + (bdir.y * BULLET_SPAWN_OFFSET);
 
-        util_spawn_bullet(b_x, b_y, true, 600, debug_weapon.bullet_sprite, bdir, debug_weapon.bullet_sprite.height, true);
+        util_spawn_bullet(b_x, b_y, true, 600, debug_weapon.bullet_sprite, bdir, 4, true);
         return true;
     },
     event_stopattack : () =>
@@ -512,7 +512,19 @@ const event_update = (ratio) =>
             y : n_y,
         };
 
-        if (!util_in_canvas_bound(n_x, n_y))
+        // Check if colliding with a grave
+        let has_collided = false;
+        for (let grave of graves)
+        {
+            const d = util_math_distance(bullet.position, grave);
+            if (d < GRAVE_COLLISION_RADIUS)
+            {
+                has_collided = true;
+                break;
+            }
+        }
+
+        if (has_collided || !util_in_canvas_bound(n_x, n_y))
             bullets.splice(i, 1);
         ++i;
     });
