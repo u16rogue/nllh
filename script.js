@@ -383,7 +383,7 @@ const event_render = () =>
     canvas.context.fillRect(STONE_WALL_THICKNESS, canvas.element.height - STONE_WALL_THICKNESS, canvas.element.width - (STONE_WALL_THICKNESS * 2), STONE_WALL_THICKNESS);
 
     // Render graves
-    graves.forEach((grave) => {
+    graves.forEach(grave => {
         canvas.context.drawImage(grave.sprite, grave.x - (grave.sprite.width / 2), grave.y - grave.sprite.height);
     });
 
@@ -444,7 +444,7 @@ const event_game_loop = () =>
     window.requestAnimationFrame(event_game_loop);
 };
 
-const PROGRESS_TOTAL = 16;
+const PROGRESS_TOTAL = 17;
 let   load_progress  = 0;
 let   has_loaded     = false;
 
