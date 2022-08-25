@@ -56,6 +56,9 @@ let state = {
         },
         grave : {
             sprites : []
+        },
+        bullet : {
+            sprite : new Image()
         }
     },
 };
@@ -172,7 +175,7 @@ let debug_weapon = {
         const b_x = player.x + (bdir.x * BULLET_SPAWN_OFFSET);
         const b_y = player.y + debug_weapon.offset.y + (bdir.y * BULLET_SPAWN_OFFSET);
 
-        util_spawn_bullet(b_x, b_y, true, 600, debug_weapon.bullet_sprite, bdir, debug_weapon.bullet_sprite.height, false);
+        util_spawn_bullet(b_x, b_y, true, 600, debug_weapon.bullet_sprite, bdir, debug_weapon.bullet_sprite.height, true);
         return true;
     },
     event_stopattack : () =>
@@ -376,6 +379,7 @@ const event_load_complete = () =>
     player.sprites.hairband.sprite = player.sprites.hairband.idle;
     state.resources.dirt.pattern = canvas.context.createPattern(state.resources.dirt.sprite, 'repeat');
     state.resources.stone.pattern = canvas.context.createPattern(state.resources.stone.sprite, 'repeat');
+    debug_weapon.bullet_sprite = state.resources.bullet.sprite;
 
     // Spawn a bunch of graves
     for (let i = 0; i < GRAVES_N_SPAWN; ++i)
@@ -459,7 +463,19 @@ const event_render = () =>
 
     // Render bullets
     bullets.forEach(bullet => {
-        canvas.context.drawImage(bullet.sprite, bullet.position.x - (bullet.sprite.width / 2), bullet.position.y - (bullet.sprite.height / 2));
+        if (bullet.is_oriented)
+        {
+            canvas.context.save();
+            canvas.context.translate(bullet.position.x, bullet.position.y);
+            const deg = util_math_vun_to_deg(bullet.direction);
+            canvas.context.rotate(-(deg - 90) * Math.PI / 180);
+            canvas.context.drawImage(bullet.sprite, -bullet.sprite.width / 2, -bullet.sprite.height / 2);
+            canvas.context.restore();
+        }
+        else
+        {
+            canvas.context.drawImage(bullet.sprite, bullet.position.x - (bullet.sprite.width / 2), bullet.position.y - (bullet.sprite.height / 2));
+        }
     });
 
     if (DEBUG)
@@ -518,7 +534,7 @@ const event_game_loop = () =>
     window.requestAnimationFrame(event_game_loop);
 };
 
-const PROGRESS_TOTAL = 17;
+const PROGRESS_TOTAL = 18;
 let   load_progress  = 0;
 let   has_loaded     = false;
 
@@ -644,6 +660,9 @@ $('jswarning', (d) =>
 
     state.resources.stone.sprite.onload = commit_progress;
     state.resources.stone.sprite.src = './assets/sprites/stone_wall.png';
+
+    state.resources.bullet.sprite.onload = commit_progress;
+    state.resources.bullet.sprite.src = './assets/sprites/generic_bullet.png';
 
     // Wait for everything to load then Trigger event loop
     console.log('Waiting for everything to load...');
