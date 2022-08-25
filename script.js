@@ -176,8 +176,9 @@ let player = {
         canvas.context.drawImage(player.sprites.hairband.sprite, p_abs.x, p_abs.y);
         
         // Track player mouse
+        const EYE_TRACK_DIFF = 1.5;
         const p2m_unit = util_math_normalize_towards(player, state.mouse);
-        canvas.context.drawImage(player.sprites.eyes, p_abs.x + (p2m_unit.x * 1.0), p_abs.y + (p2m_unit.y * 1.0));
+        canvas.context.drawImage(player.sprites.eyes, p_abs.x + (p2m_unit.x * EYE_TRACK_DIFF), p_abs.y + (p2m_unit.y * EYE_TRACK_DIFF));
 
         const weapon = player.weapon;
         if (weapon != null)
@@ -445,25 +446,25 @@ $('jswarning', (d) =>
     // Check reso
     event_resize();
 
-    player.sprites.base.onload = () => { commit_progress(); };
+    player.sprites.base.onload = commit_progress;
     player.sprites.base.src = './assets/sprites/nanahi_base.png';
 
-    player.sprites.eyes.onload = () => { commit_progress(); };
+    player.sprites.eyes.onload = commit_progress;
     player.sprites.eyes.src = './assets/sprites/nanahi_eyes.png';
 
-    player.sprites.arms.onload = () => { commit_progress(); };
+    player.sprites.arms.onload = commit_progress;
     player.sprites.arms.src = './assets/sprites/nanahi_arms.png';
 
-    player.sprites.legs.idle.onload = () => { commit_progress(); };
+    player.sprites.legs.idle.onload = commit_progress;
     player.sprites.legs.idle.src = './assets/sprites/nanahi_walk_idle.png';
 
     // TODO: should just loop this lol
     let leg_cycle0 = new Image();
-    leg_cycle0.onload = () => { commit_progress(); };
+    leg_cycle0.onload = commit_progress;
     leg_cycle0.src = './assets/sprites/nanahi_walk_0.png';
 
     let leg_cycle1 = new Image();
-    leg_cycle1.onload = () => { commit_progress(); };
+    leg_cycle1.onload = commit_progress;
     leg_cycle1.src = './assets/sprites/nanahi_walk_1.png';
 
     player.sprites.legs.cycle.push(leg_cycle0);
@@ -472,7 +473,7 @@ $('jswarning', (d) =>
     for(let i = 0; i < 3; ++i)
     {
         let hairband_cycle = new Image();
-        hairband_cycle.onload = () => { commit_progress(); };
+        hairband_cycle.onload = commit_progress;
         hairband_cycle.src = `./assets/sprites/nanahi_hairband_${i}.png`;
         player.sprites.hairband.cycle.push(hairband_cycle);
     }
@@ -481,16 +482,16 @@ $('jswarning', (d) =>
     player.sprites.hairband.cycle.push(player.sprites.hairband.cycle[1]);
 
 
-    player.sprites.hairband.idle.onload = () => { commit_progress(); };
+    player.sprites.hairband.idle.onload = commit_progress;
     player.sprites.hairband.idle.src = './assets/sprites/nanahi_hairband_idle.png';
 
-    debug_weapon.sprite.onload = () => { commit_progress(); };
+    debug_weapon.sprite.onload = commit_progress;
     debug_weapon.sprite.src = './assets/sprites/test_weapon.png';
 
-    debug_weapon.bullet_sprite.onload = () => { commit_progress(); };
+    debug_weapon.bullet_sprite.onload = commit_progress;
     debug_weapon.bullet_sprite.src = './assets/sprites/test_bullet.png';
 
-    state.resources.dirt.sprite.onload = () => { commit_progress(); };
+    state.resources.dirt.sprite.onload = commit_progress;
     state.resources.dirt.sprite.src = './assets/sprites/dirt.png';
 
     // Wait for everything to load then Trigger event loop
