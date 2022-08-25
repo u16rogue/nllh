@@ -29,6 +29,12 @@ let state = {
     },
     keys : {},
     pause : false,
+    resources : {
+        dirt : {
+            sprite : new Image(),
+            pattern : null
+        }
+    },
 };
 
 let canvas = {
@@ -216,7 +222,7 @@ let player = {
                 " w_cycle:" + player.sprites.legs.sprite.src/*+
                 " t_x:" + test_dir.x +
                 " t_y:" + test_dir.y */
-                , 5, CANVAS_HEIGHT - 5);
+                , 5, CANVAS_HEIGHT - 20);
         }
     },
     update : (ratio) =>
@@ -309,6 +315,7 @@ const event_load_complete = () =>
     player.y = canvas.element.height / 2;
     player.sprites.legs.sprite = player.sprites.legs.idle;
     player.sprites.hairband.sprite = player.sprites.hairband.idle;
+    state.resources.dirt.pattern = canvas.context.createPattern(state.resources.dirt.sprite, 'repeat');
 
     if (DEBUG) player.weapon = debug_weapon;
 };
@@ -316,6 +323,11 @@ const event_load_complete = () =>
 const event_render = () =>
 {
     canvas.context.clearRect(0, 0, canvas.element.width, canvas.element.height);
+    
+    // Render ground
+    canvas.context.fillStyle = state.resources.dirt.pattern;
+    canvas.context.fillRect(0, 0, canvas.element.width, canvas.element.height);
+
     player.render();
 
     // Render bullets
@@ -365,7 +377,7 @@ const event_game_loop = () =>
     window.requestAnimationFrame(event_game_loop);
 };
 
-const PROGRESS_TOTAL = 12;
+const PROGRESS_TOTAL = 13;
 let   load_progress  = 0;
 let   has_loaded     = false;
 
@@ -466,8 +478,7 @@ $('jswarning', (d) =>
     }
 
     // a proper way to do a reverse cycle is to do math but..
-    for (let i = 1; i >= 0; --i)
-        player.sprites.hairband.cycle.push(player.sprites.hairband.cycle[i]);
+    player.sprites.hairband.cycle.push(player.sprites.hairband.cycle[1]);
 
 
     player.sprites.hairband.idle.onload = () => { commit_progress(); };
@@ -478,6 +489,9 @@ $('jswarning', (d) =>
 
     debug_weapon.bullet_sprite.onload = () => { commit_progress(); };
     debug_weapon.bullet_sprite.src = './assets/sprites/test_bullet.png';
+
+    state.resources.dirt.sprite.onload = () => { commit_progress(); };
+    state.resources.dirt.sprite.src = './assets/sprites/dirt.png';
 
     // Wait for everything to load then Trigger event loop
     console.log('Waiting for everything to load...');
