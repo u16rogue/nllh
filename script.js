@@ -20,6 +20,9 @@ const HAIRBAND_MOVING_CYCLE = 400;
 
 const LEG_CYCLE_TIME = 400; // cycle time for leg animation switch
 
+const GRAVES_N_SPAWN = 4; // number of graves to randomly spawn
+const GRAVE_COLLISION_RADIUS = 30;
+
 const $ = (id, action = null) =>
 {
     let obj = document.getElementById(id) ?? document.getElementsByClassName(id);
@@ -112,7 +115,12 @@ const util_math_vun_to_deg = (p) =>
     return Math.atan2(p.x, p.y) * 180 / Math.PI;
 };
 
-const util_spawn_bullet = (x_, y_, own_, speed_, sprite_, dir_, oriented_) =>
+const util_rand_num = (low, high) =>
+{
+    return (Math.floor(Math.random() * high) + low) % high;
+};
+
+const util_spawn_bullet = (x_, y_, own_, speed_, sprite_, dir_, hitradius_, oriented_) =>
 {
     bullets.push({
         origin : {
@@ -128,6 +136,7 @@ const util_spawn_bullet = (x_, y_, own_, speed_, sprite_, dir_, oriented_) =>
         own : own_,
         speed : speed_,
         direction : dir_,
+        hitradius : hitradius_,
         is_oriented : oriented_ // This will run calculation to proper align the angle of the shot to path, incase we have a circle projectiles we dont need the expensive math for that
     });
 };
@@ -163,7 +172,7 @@ let debug_weapon = {
         const b_x = player.x + (bdir.x * BULLET_SPAWN_OFFSET);
         const b_y = player.y + debug_weapon.offset.y + (bdir.y * BULLET_SPAWN_OFFSET);
 
-        util_spawn_bullet(b_x, b_y, true, 600, debug_weapon.bullet_sprite, bdir, false);
+        util_spawn_bullet(b_x, b_y, true, 600, debug_weapon.bullet_sprite, bdir, debug_weapon.bullet_sprite.height, false);
         return true;
     },
     event_stopattack : () =>
@@ -245,14 +254,12 @@ let player = {
             canvas.context.fillStyle = "rgb(255, 255, 255)";
             canvas.context.strokeStyle = "rgb(255, 255, 255)";
 
-            /*
             canvas.context.beginPath();
             canvas.context.moveTo(player.x, player.y);
             const test_dir = util_math_forward_towards(player, state.mouse, 50);
             canvas.context.lineTo(test_dir.x, test_dir.y);
             canvas.context.closePath();
             canvas.context.stroke();
-            */
 
             canvas.context.fillText(
                 "DEBUG >> Speed: " + Math.round(player.speed) +
@@ -321,7 +328,18 @@ let player = {
         else if (player.speed < player.min_speed)
             player.speed = player.min_speed;
 
-        if (util_in_canvas_bound(n_x, n_y))
+        // Grave collission
+        let has_collide = false;
+        for (let grave of graves)
+        {
+            if (util_math_distance({ x: n_x, y : n_y }, grave) < GRAVE_COLLISION_RADIUS)
+            {
+                has_collide = true;
+                break;
+            }
+        }
+
+        if (!has_collide && util_in_canvas_bound(n_x, n_y))
         {
             player.x = n_x;
             player.y = n_y;
@@ -359,6 +377,47 @@ const event_load_complete = () =>
     state.resources.dirt.pattern = canvas.context.createPattern(state.resources.dirt.sprite, 'repeat');
     state.resources.stone.pattern = canvas.context.createPattern(state.resources.stone.sprite, 'repeat');
 
+    // Spawn a bunch of graves
+    for (let i = 0; i < GRAVES_N_SPAWN; ++i)
+    {
+        const GRAVE_SIZE = 64; // dumb magic number but idk how to properly implement this incase we have diff grave sizes but for now it'll work
+        const min_x = 100 + STONE_WALL_THICKNESS + GRAVE_SIZE;
+        const max_x = canvas.element.width - STONE_WALL_THICKNESS - GRAVE_SIZE;
+        const min_y = 100 + min_x;
+        const max_y = canvas.element.height - STONE_WALL_THICKNESS - GRAVE_SIZE;
+
+        let cx = util_rand_num(min_x, max_x);
+        let cy = util_rand_num(min_y, max_y);
+
+        // Make sure no graves are on top of each other
+        while (true)
+        {
+            let has_too_close = false;
+
+            for (let grave of graves)            
+            {
+                if (util_math_distance({ x : cx, y : cy }, grave) <= GRAVE_SIZE)
+                {
+                    has_too_close = true;
+                    break;
+                }
+            }
+
+            if (!has_too_close)
+                break;
+
+            cx = util_rand_num(min_x, max_x);
+            cy = util_rand_num(min_y, max_y);
+        }
+
+        util_create_enemy_spawn_point(
+            cx,
+            cy,
+            state.resources.grave.sprites[util_rand_num(0, state.resources.grave.sprites.length)],
+            (grave) => { return false; }
+        );
+    }
+
     if (DEBUG) player.weapon = debug_weapon;
 };
 
@@ -384,7 +443,7 @@ const event_render = () =>
 
     // Render graves
     graves.forEach(grave => {
-        canvas.context.drawImage(grave.sprite, grave.x - (grave.sprite.width / 2), grave.y - grave.sprite.height);
+        canvas.context.drawImage(grave.sprite, grave.x - (grave.sprite.width / 2), grave.y - grave.sprite.height / 2);
     });
 
     player.render();
@@ -400,6 +459,12 @@ const event_render = () =>
         canvas.context.fillText('n_grave:' + graves.length +
                                 ' n_enemies:' + enemies.length
                                 , 5, CANVAS_HEIGHT - 5);
+
+        graves.forEach(grave => {
+            canvas.context.beginPath();
+            canvas.context.arc(grave.x, grave.y, GRAVE_COLLISION_RADIUS, 0, 360);
+            canvas.context.stroke();
+        });
     }
 
     // TODO: render pause banner thing
