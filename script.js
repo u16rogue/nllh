@@ -51,6 +51,9 @@ let state = {
             sprite : new Image(),
             pattern : null
         },
+        grave : {
+            sprites : []
+        }
     },
 };
 
@@ -127,7 +130,17 @@ const util_spawn_bullet = (x_, y_, own_, speed_, sprite_, dir_, oriented_) =>
         direction : dir_,
         is_oriented : oriented_ // This will run calculation to proper align the angle of the shot to path, incase we have a circle projectiles we dont need the expensive math for that
     });
-}
+};
+
+const util_create_enemy_spawn_point = (x_, y_, sprite_, callback_should_spawn_) =>
+{
+    graves.push({
+        x : x_,
+        y : y_,
+        sprite : sprite_,
+        cb_sspawn : callback_should_spawn_, 
+    });
+};
 
 let debug_weapon = {
     sprite : new Image(),
@@ -190,9 +203,6 @@ let player = {
 
     render : () =>
     {
-        canvas.context.fillStyle = "rgb(255, 255, 255)";
-        canvas.context.strokeStyle = "rgb(255, 255, 255)";
-
         let p_abs = {
             x : player.x - player.sprites.base.width / 2,
             y : player.y - player.sprites.base.height / 2,
@@ -232,8 +242,10 @@ let player = {
         // DEBUG
         if (DEBUG)
         {
+            canvas.context.fillStyle = "rgb(255, 255, 255)";
+            canvas.context.strokeStyle = "rgb(255, 255, 255)";
+
             /*
-            
             canvas.context.beginPath();
             canvas.context.moveTo(player.x, player.y);
             const test_dir = util_math_forward_towards(player, state.mouse, 50);
@@ -353,6 +365,7 @@ const event_load_complete = () =>
 const event_render = () =>
 {
     canvas.context.clearRect(0, 0, canvas.element.width, canvas.element.height);
+
     
     // Render ground
     canvas.context.fillStyle = state.resources.dirt.pattern;
@@ -369,12 +382,25 @@ const event_render = () =>
     // Bottom walls
     canvas.context.fillRect(STONE_WALL_THICKNESS, canvas.element.height - STONE_WALL_THICKNESS, canvas.element.width - (STONE_WALL_THICKNESS * 2), STONE_WALL_THICKNESS);
 
+    // Render graves
+    graves.forEach((grave) => {
+        canvas.context.drawImage(grave.sprite, grave.x - (grave.sprite.width / 2), grave.y - grave.sprite.height);
+    });
+
     player.render();
 
     // Render bullets
     bullets.forEach(bullet => {
         canvas.context.drawImage(bullet.sprite, bullet.position.x - (bullet.sprite.width / 2), bullet.position.y - (bullet.sprite.height / 2));
     });
+
+    if (DEBUG)
+    {
+        canvas.context.fillStyle = "rgb(255, 255, 255)";
+        canvas.context.fillText('n_grave:' + graves.length +
+                                ' n_enemies:' + enemies.length
+                                , 5, CANVAS_HEIGHT - 5);
+    }
 
     // TODO: render pause banner thing
 };
@@ -418,7 +444,7 @@ const event_game_loop = () =>
     window.requestAnimationFrame(event_game_loop);
 };
 
-const PROGRESS_TOTAL = 13;
+const PROGRESS_TOTAL = 16;
 let   load_progress  = 0;
 let   has_loaded     = false;
 
@@ -520,6 +546,14 @@ $('jswarning', (d) =>
 
     // a proper way to do a reverse cycle is to do math but..
     player.sprites.hairband.cycle.push(player.sprites.hairband.cycle[1]);
+
+    for (let i = 0; i < 3; ++i)
+    {
+        let grave = new Image();
+        grave.onload = commit_progress;
+        grave.src = `./assets/sprites/grave_${i}.png`;
+        state.resources.grave.sprites.push(grave);
+    }
 
 
     player.sprites.hairband.idle.onload = commit_progress;
