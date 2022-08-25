@@ -129,6 +129,11 @@ let player = {
         base : new Image(),
         eyes : new Image(),
         arms : new Image(),
+        hairband : {
+            sprite : new Image(),
+            idle : new Image(),
+            cycle : []
+        },
         legs : {
             sprite : null,
             idle : new Image(),
@@ -161,6 +166,7 @@ let player = {
         if (player.weapon == null)
             canvas.context.drawImage(player.sprites.arms, p_abs.x, p_abs.y);
         canvas.context.drawImage(player.sprites.base, p_abs.x, p_abs.y);
+        canvas.context.drawImage(player.sprites.hairband.sprite, p_abs.x, p_abs.y);
         
         // Track player mouse
         const p2m_unit = util_math_normalize_towards(player, state.mouse);
@@ -297,6 +303,7 @@ const event_load_complete = () =>
     player.x = canvas.element.width / 2;
     player.y = canvas.element.height / 2;
     player.sprites.legs.sprite = player.sprites.legs.idle;
+    player.sprites.hairband.sprite = player.sprites.hairband.idle;
 
     if (DEBUG) player.weapon = debug_weapon;
 };
@@ -353,7 +360,7 @@ const event_game_loop = () =>
     window.requestAnimationFrame(event_game_loop);
 };
 
-const PROGRESS_TOTAL = 8;
+const PROGRESS_TOTAL = 9;
 let   load_progress  = 0;
 let   has_loaded     = false;
 
@@ -443,6 +450,9 @@ $('jswarning', (d) =>
 
     player.sprites.legs.cycle.push(leg_cycle0);
     player.sprites.legs.cycle.push(leg_cycle1);
+
+    player.sprites.hairband.idle.onload = () => { commit_progress(); };
+    player.sprites.hairband.idle.src = './assets/sprites/nanahi_hairband_idle.png';
 
     debug_weapon.sprite.onload = () => { commit_progress(); };
     debug_weapon.sprite.src = './assets/sprites/test_weapon.png';
