@@ -13,6 +13,12 @@ const STONE_WALL_THICKNESS = 60; // This affects the boundary calculation
 const STONE_WALL_LEISURE   = -5; // it would not look great if we immediately stop when hitting the literal edge of a wall, this gives us a little bit of space.
                                  // why is it separate? because the thickness defines the drawing size while this subtracts and creates the actual bounding size
 
+// cycle time for each hairband animation frame
+const HAIRBAND_IDLE_CYCLE   = 1200;
+const HAIRBAND_MOVING_CYCLE = 400;
+
+const LEG_CYCLE_TIME = 400; // cycle time for leg animation switch
+
 const $ = (id, action = null) =>
 {
     let obj = document.getElementById(id) ?? document.getElementsByClassName(id);
@@ -264,18 +270,17 @@ let player = {
         if (player.last_move == 0 && has_moved) // has not moved previously
         {
             player.last_move = state.interval;
-            player.hairband_cycle_time = 400;
+            player.hairband_cycle_time = HAIRBAND_MOVING_CYCLE;
         }
         else if (player.last_move != 0 && !has_moved) // has stopped moving
         {
             player.last_move = 0; // TODO: this is why deaccel isnt working, should track this somewhere else
             player.sprites.legs.sprite = player.sprites.legs.idle;
-            player.hairband_cycle_time = 1200;
+            player.hairband_cycle_time = HAIRBAND_IDLE_CYCLE;
         }
 
         if (has_moved)
         {
-            const LEG_CYCLE_TIME = 400;
             player.sprites.legs.sprite = player.sprites.legs.cycle[Math.floor((state.interval % LEG_CYCLE_TIME / (LEG_CYCLE_TIME / player.sprites.legs.cycle.length)))];
         }
 
