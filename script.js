@@ -7,9 +7,9 @@ const DEBUG = true;
 const CANVAS_WIDTH  = 800;
 const CANVAS_HEIGHT = 600;
 
-const STONE_WALL_THICKNESS = 60; // This affects the boundary calculation
-const STONE_WALL_LEISURE   = -10; // so basically it would not look great if we immediately stop when hitting the literal edge of a wall, this gives us a little bit of space.
-                                  // why is it separate? because the thickness defines the drawing size while this subtracts and creates the actual bounding size or what ever its called
+const STONE_WALL_THICKNESS = 60;  // This affects the boundary calculation
+const STONE_WALL_LEISURE   = -5; // so basically it would not look great if we immediately stop when hitting the literal edge of a wall, this gives us a little bit of space.
+                                  // why is it separate? because the thickness defines the drawing size while this subtracts and creates the actual bounding size
 
 const $ = (id, action = null) =>
 {
@@ -54,7 +54,11 @@ let bullets = [];
 
 const util_in_canvas_bound = (x, y) =>
 {
-    return x >= 0 && x <= canvas.element.width && y >= 0 && y <= canvas.element.height;
+    // yes the 0 is unecessary but
+    return x >= (0 + STONE_WALL_THICKNESS + STONE_WALL_LEISURE)
+        && x <= (canvas.element.width - STONE_WALL_THICKNESS - STONE_WALL_LEISURE)
+        && y >= (0 + STONE_WALL_THICKNESS + STONE_WALL_LEISURE)
+        && y <= (canvas.element.height - STONE_WALL_THICKNESS + STONE_WALL_LEISURE);
 };
 
 const util_math_distance = (p1, p2) =>
