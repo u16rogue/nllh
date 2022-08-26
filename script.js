@@ -20,6 +20,8 @@ const LEG_CYCLE_TIME = 400; // cycle time for leg animation switch
 const GRAVES_N_SPAWN = 4; // number of graves to randomly spawn
 const GRAVE_COLLISION_RADIUS = 30;
 
+const EYE_TRACK_DIFF = 1.5; // how far will the eyes move when tracking something
+
 const $ = (id, action = null) =>
 {
     let obj = document.getElementById(id) ?? document.getElementsByClassName(id);
@@ -157,18 +159,16 @@ const util_create_enemy_spawn_point = (x_, y_, sprite_, callback_should_spawn_) 
     });
 };
 
-const util_spawn_enemy = (x_, y_, sprite_base_, hp_, speed_, collission_radius_, attack_radius_) =>
+const util_spawn_enemy = (x_, y_, hp_, speed_, collission_radius_, attack_radius_, cb_render_) =>
 {
     enemies.push({
         x : x_,
         y : y_,
-        sprites : {
-            base : sprite_base_
-        },
         hp : hp_,
         speed : speed_,
         collission_radius : collission_radius_,
         attack_radius : attack_radius_,
+        render : cb_render_,
     });
 };
 
@@ -247,7 +247,6 @@ let player = {
         canvas.context.drawImage(player.sprites.hairband.sprite, p_abs.x, p_abs.y);
         
         // Track player mouse
-        const EYE_TRACK_DIFF = 1.5;
         const p2m_unit = util_math_normalize_towards(player, state.mouse);
         canvas.context.drawImage(player.sprites.eyes, p_abs.x + (p2m_unit.x * EYE_TRACK_DIFF), p_abs.y + (p2m_unit.y * EYE_TRACK_DIFF));
 
@@ -415,7 +414,16 @@ const event_load_complete = () =>
     state.resources.stone.pattern = canvas.context.createPattern(state.resources.stone.sprite, 'repeat');
     debug_weapon.bullet_sprite = state.resources.bullet.sprite;
 
-    util_spawn_enemy(200, 200, state.resources.dead.sprites.base, 3, 0, 20, 26);
+    util_spawn_enemy(200, 200, 3, 0, 20, 26, (self) => {
+        let s_abs = {
+            x : self.x - state.resources.dead.sprites.base.width  / 2,
+            y : self.y - state.resources.dead.sprites.base.height / 2,
+        };
+        canvas.context.drawImage(state.resources.dead.sprites.base, s_abs.x, s_abs.y);
+        
+        let e2p_vun = util_math_normalize_towards(s_abs, player);
+        canvas.context.drawImage(player.sprites.eyes, s_abs.x + (e2p_vun.x * EYE_TRACK_DIFF), s_abs.y + (e2p_vun.y * EYE_TRACK_DIFF));
+    });
 
     // Spawn a bunch of graves
     for (let i = 0; i < GRAVES_N_SPAWN; ++i)
@@ -499,7 +507,7 @@ const event_render = () =>
 
     // Render enemies
     enemies.forEach(enemy => {
-        canvas.context.drawImage(enemy.sprites.base, enemy.x - (enemy.sprites.base.width / 2), enemy.y - (enemy.sprites.base.height / 2));
+        enemy.render(enemy);
     });
 
     // Render bullets
