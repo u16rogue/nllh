@@ -125,7 +125,7 @@ const util_rand_num = (low, high) =>
     return (Math.floor(Math.random() * (high - low)) + low);
 };
 
-const util_spawn_bullet = (x_, y_, own_, speed_, sprite_, dir_, hitradius_, oriented_) =>
+const util_spawn_bullet = (x_, y_, own_, speed_, sprite_, dir_, hitradius_, damage_, oriented_) =>
 {
     bullets.push({
         origin : {
@@ -137,6 +137,7 @@ const util_spawn_bullet = (x_, y_, own_, speed_, sprite_, dir_, hitradius_, orie
             x : x_,
             y : y_,
         },
+        damage : damage_,
         sprite : sprite_,
         own : own_,
         speed : speed_,
@@ -192,7 +193,7 @@ let debug_weapon = {
         const b_x = player.x + (bdir.x * BULLET_SPAWN_OFFSET);
         const b_y = player.y + debug_weapon.offset.y + (bdir.y * BULLET_SPAWN_OFFSET);
 
-        util_spawn_bullet(b_x, b_y, true, 600, debug_weapon.bullet_sprite, bdir, 4, true);
+        util_spawn_bullet(b_x, b_y, true, 600, debug_weapon.bullet_sprite, bdir, 4, 1, true);
         player.max_speed = 100;
         return true;
     },
@@ -414,7 +415,7 @@ const event_load_complete = () =>
     state.resources.stone.pattern = canvas.context.createPattern(state.resources.stone.sprite, 'repeat');
     debug_weapon.bullet_sprite = state.resources.bullet.sprite;
 
-    util_spawn_enemy(200, 200, state.resources.dead.sprites.base, 1, 0, 20, 26);
+    util_spawn_enemy(200, 200, state.resources.dead.sprites.base, 3, 0, 20, 26);
 
     // Spawn a bunch of graves
     for (let i = 0; i < GRAVES_N_SPAWN; ++i)
@@ -566,20 +567,41 @@ const event_update = (ratio) =>
             y : n_y,
         };
 
-        // Check if colliding with a grave
         let has_collided = false;
+
+        // Check if colliding with a grave
         for (let grave of graves)
         {
-            const d = util_math_distance(bullet.position, grave);
-            if (d < GRAVE_COLLISION_RADIUS)
+            if (util_math_distance(bullet.position, grave) < GRAVE_COLLISION_RADIUS)
             {
                 has_collided = true;
                 break;
             }
         }
 
+        // enemy hit
+        if (!has_collided)
+        {
+            for (let enemy of enemies)
+            {
+                if (util_math_distance(bullet.position, enemy) < enemy.collission_radius + bullet.hitradius)
+                {
+                    enemy.hp -= bullet.damage;
+                    has_collided = true;
+                    break;
+                }
+            }
+        }
+
         if (has_collided || !util_in_canvas_bound(n_x, n_y))
             bullets.splice(i, 1);
+        ++i;
+    });
+
+    i = 0;
+    enemies.forEach(enemy => {
+        if (enemy.hp <= 0)
+            enemies.splice(i, 1);
         ++i;
     });
 
