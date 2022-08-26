@@ -454,7 +454,7 @@ const event_load_complete = () =>
     state.resources.stone.pattern = canvas.context.createPattern(state.resources.stone.sprite, 'repeat');
     debug_weapon.bullet_sprite = state.resources.bullet.sprite;
 
-    util_spawn_enemy_zombie(200, 200, 3, 0);
+    util_spawn_enemy_zombie(200, 200, 3, 50);
 
     // Spawn a bunch of graves
     for (let i = 0; i < GRAVES_N_SPAWN; ++i)
@@ -512,7 +512,6 @@ const event_load_complete = () =>
 const event_render = () =>
 {
     canvas.context.clearRect(0, 0, canvas.element.width, canvas.element.height);
-
     
     // Render ground
     canvas.context.fillStyle = state.resources.dirt.pattern;
@@ -640,7 +639,21 @@ const event_update = (ratio) =>
     i = 0;
     enemies.forEach(enemy => {
         if (enemy.hp <= 0)
+        {
             enemies.splice(i, 1);
+            return;
+        }
+
+        // Follow player
+        const np = util_math_forward_towards(enemy, player, enemy.speed * ratio);
+
+        // Dont 'swallow' the player by checking bound
+        if (util_math_distance(np, player) < enemy.collission_radius)
+            return;
+
+        enemy.x = np.x;
+        enemy.y = np.y;
+
         ++i;
     });
 
