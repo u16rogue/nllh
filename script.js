@@ -2,7 +2,7 @@
 // TODO: refactor. should use classes and separate everything in their own JS
 // TODO: refactor. object management should be proper
 
-const DEBUG = true;
+const DEBUG = false;
 
 const CANVAS_WIDTH  = 800;
 const CANVAS_HEIGHT = 600;
@@ -24,8 +24,10 @@ const EYE_TRACK_DIFF = 1.5; // how far will the eyes move when tracking somethin
 
 const PLAYER_SHOOT_SPEED_PENALTY = 30;
 
+const ZOMBIE_MAX_SPAWN = -1; // set to -1 for infinite
 const ZOMBIE_SPAWN_INTERVAL = 600;
 const ZOMBIE_SPAWN_CHANCE   = 100 - 80;
+const ZOMBIE_BITE_CONFIRM_INTERVAL = 300; // time it takes for the player to be in the attack radius before we dish out damage
 
 const $ = (id, action = null) =>
 {
@@ -178,6 +180,7 @@ const util_spawn_enemy = (x_, y_, hp_, speed_, collission_radius_, attack_radius
         collission_radius : collission_radius_,
         attack_radius : attack_radius_,
         render : cb_render_,
+        confirm_bite : 0
     });
 };
 
@@ -250,6 +253,17 @@ let debug_weapon = {
     },
 };
 
+const reset_state = () =>
+{
+    enemies = [];
+    bullets = [];
+    state.keys = {};
+    player.hp = 3;
+    state.interval = 0;
+    state.next_spawn = 0;
+    player.kills = 0;
+}
+
 let player = {
     sprites : {
         base : new Image(),
@@ -266,6 +280,8 @@ let player = {
             cycle : [ ]
         }, 
     },
+    hp     : 3,
+    kills  : 0,
     x      : 0,
     y      : 0,
     speed  : 100,
@@ -344,6 +360,15 @@ let player = {
     },
     update : (ratio) =>
     {
+        if (player.hp <= 0)
+        {
+            alert(`You died!\nTotal kills: ${player.kills}\nTime survived: ${state.interval / 1000}\n\nPress OK to try again!`);
+            reset_state();
+            player.x = CANVAS_WIDTH / 2;
+            player.y = CANVAS_HEIGHT / 2;
+            return;
+        }
+
         let n_x = player.x;
         let n_y = player.y;
         if ('w' in state.keys)
@@ -565,7 +590,7 @@ const event_render = () =>
     {
         canvas.context.fillStyle = "rgb(255, 255, 255)";
         canvas.context.fillText('n_grave:' + graves.length +
-                                ' n_enemies:' + enemies.length +
+                                ' n_enemies:' + enemies.length + '/' + ZOMBIE_MAX_SPAWN +
                                 ' n_loaded:' + load_progress + '/' + PROGRESS_TOTAL
                                 , 5, CANVAS_HEIGHT - 5);
 
@@ -588,6 +613,14 @@ const event_render = () =>
             canvas.context.stroke();
         });
     }
+
+    // Render text
+    canvas.context.save();
+    canvas.context.fillStyle = "rgb(255, 255, 255)";
+    canvas.context.font = "46px visitor";
+    canvas.context.fillText('HP: ' + player.hp + ' KILLS: ' + player.kills, 20, 30);
+    canvas.context.fillText('TIME: ' + (state.interval / 1000) + (state.pause ? ' (Paused)' : ''), 20, 55);
+    canvas.context.restore();
 
     // TODO: render pause banner thing
 };
@@ -644,12 +677,32 @@ const event_update = (ratio) =>
     enemies.forEach(enemy => {
         if (enemy.hp <= 0)
         {
+            ++player.kills;
             enemies.splice(i, 1);
             return;
         }
 
         // Follow player
         const np = util_math_forward_towards(enemy, player, enemy.speed * ratio);
+
+        // Check for bite
+        let in_attack_dist = false;
+        if (util_math_distance(enemy, player) < enemy.attack_radius)
+        {
+            in_attack_dist = true;
+            if (enemy.confirm_bite == 0)
+                enemy.confirm_bite = state.interval + ZOMBIE_BITE_CONFIRM_INTERVAL;
+        }
+        else
+        {
+            enemy.confirm_bite = 0;
+        }
+
+        if (in_attack_dist && state.interval > enemy.confirm_bite)
+        {
+            --player.hp;
+            enemy.confirm_bite = state.interval + ZOMBIE_BITE_CONFIRM_INTERVAL * 2; // prevent damage stacking
+        }
 
         // Dont 'swallow' the player by checking bound
         if (util_math_distance(np, player) < enemy.collission_radius)
@@ -661,7 +714,7 @@ const event_update = (ratio) =>
         ++i;
     });
     
-    if (state.interval > state.next_spawn)
+    if (state.interval > state.next_spawn && (ZOMBIE_MAX_SPAWN == -1 || enemies.length < ZOMBIE_MAX_SPAWN))
     {
         state.next_spawn = state.interval + ZOMBIE_SPAWN_INTERVAL;
         if (util_rand_num(0, 100) < ZOMBIE_SPAWN_CHANCE)
@@ -681,8 +734,9 @@ const event_game_loop = () =>
     {
         state.interval += delta;
         event_update(delta / 1000);
-        event_render();
     }
+
+    event_render();
     prev = now;
     window.requestAnimationFrame(event_game_loop);
 };
