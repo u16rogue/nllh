@@ -24,8 +24,8 @@ const EYE_TRACK_DIFF = 1.5; // how far will the eyes move when tracking somethin
 
 const PLAYER_SHOOT_SPEED_PENALTY = 30;
 
-const ZOMBIE_SPAWN_INTERVAL = 1000;
-const ZOMBIE_SPAWN_CHANCE   = 50;
+const ZOMBIE_SPAWN_INTERVAL = 600;
+const ZOMBIE_SPAWN_CHANCE   = 100 - 80;
 
 const $ = (id, action = null) =>
 {
@@ -668,7 +668,7 @@ const event_update = (ratio) =>
             return;
 
         const spawn_grave = graves[util_rand_num(0, graves.length)];
-        util_spawn_enemy_zombie(spawn_grave.x, spawn_grave.y, util_rand_num(2, 6), util_rand_num(20, 80));
+        util_spawn_enemy_zombie(spawn_grave.x, spawn_grave.y, util_rand_num(2, 6), util_rand_num(60, 120));
     }
 };
 
