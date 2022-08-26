@@ -2,9 +2,6 @@
 // TODO: refactor. should use classes and separate everything in their own JS
 // TODO: refactor. object management should be proper
 
-// TODO: add recoil and slow player when shooting so player wont just spam hold fire
-// TODO: proper bullet sprite
-
 const DEBUG = true;
 
 const CANVAS_WIDTH  = 800;
@@ -59,6 +56,11 @@ let state = {
         },
         bullet : {
             sprite : new Image()
+        },
+        dead : {
+            sprites : {
+                base : new Image()
+            }
         }
     },
 };
@@ -154,6 +156,20 @@ const util_create_enemy_spawn_point = (x_, y_, sprite_, callback_should_spawn_) 
     });
 };
 
+const util_spawn_enemy = (x_, y_, sprite_base_, hp_, speed_, collission_radius_) =>
+{
+    enemies.push({
+        x : x_,
+        y : y_,
+        sprites : {
+            base : sprite_base_
+        },
+        hp : hp_,
+        speed : speed_,
+        collission_radius : collission_radius_,
+    });
+};
+
 let debug_weapon = {
     sprite : new Image(),
     bullet_sprite : new Image(),
@@ -200,7 +216,7 @@ let player = {
             sprite : null,
             idle : new Image(),
             cycle : [ ]
-        },
+        }, 
     },
     x      : 0,
     y      : 0,
@@ -383,6 +399,8 @@ const event_load_complete = () =>
     state.resources.stone.pattern = canvas.context.createPattern(state.resources.stone.sprite, 'repeat');
     debug_weapon.bullet_sprite = state.resources.bullet.sprite;
 
+    util_spawn_enemy(200, 200, state.resources.dead.sprites.base, 1, 0, 26);
+
     // Spawn a bunch of graves
     for (let i = 0; i < GRAVES_N_SPAWN; ++i)
     {
@@ -463,6 +481,11 @@ const event_render = () =>
 
     player.render();
 
+    // Render enemies
+    enemies.forEach(enemy => {
+        canvas.context.drawImage(enemy.sprites.base, enemy.x - (enemy.sprites.base.width / 2), enemy.y - (enemy.sprites.base.height / 2));
+    });
+
     // Render bullets
     bullets.forEach(bullet => {
         if (bullet.is_oriented)
@@ -484,7 +507,8 @@ const event_render = () =>
     {
         canvas.context.fillStyle = "rgb(255, 255, 255)";
         canvas.context.fillText('n_grave:' + graves.length +
-                                ' n_enemies:' + enemies.length
+                                ' n_enemies:' + enemies.length +
+                                ' n_loaded:' + load_progress + '/' + PROGRESS_TOTAL
                                 , 5, CANVAS_HEIGHT - 5);
 
         graves.forEach(grave => {
@@ -548,7 +572,7 @@ const event_game_loop = () =>
     window.requestAnimationFrame(event_game_loop);
 };
 
-const PROGRESS_TOTAL = 18;
+const PROGRESS_TOTAL = 19;
 let   load_progress  = 0;
 let   has_loaded     = false;
 
@@ -677,6 +701,9 @@ $('jswarning', (d) =>
 
     state.resources.bullet.sprite.onload = commit_progress;
     state.resources.bullet.sprite.src = './assets/sprites/generic_bullet.png';
+
+    state.resources.dead.sprites.base.onload = commit_progress;
+    state.resources.dead.sprites.base.src = './assets/sprites/dead_base.png';
 
     // Wait for everything to load then Trigger event loop
     console.log('Waiting for everything to load...');
