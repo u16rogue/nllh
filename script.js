@@ -22,6 +22,11 @@ const GRAVE_COLLISION_RADIUS = 30;
 
 const EYE_TRACK_DIFF = 1.5; // how far will the eyes move when tracking something
 
+const PLAYER_SHOOT_SPEED_PENALTY = 30;
+
+const ZOMBIE_SPAWN_INTERVAL = 1000;
+const ZOMBIE_SPAWN_CHANCE   = 50;
+
 const $ = (id, action = null) =>
 {
     let obj = document.getElementById(id) ?? document.getElementsByClassName(id);
@@ -44,6 +49,7 @@ let state = {
     },
     keys : {},
     pause : false,
+    next_spawn : 0,
     resources : {
         dirt : {
             sprite : new Image(),
@@ -234,7 +240,7 @@ let debug_weapon = {
         const b_y = player.y + debug_weapon.offset.y + (bdir.y * BULLET_SPAWN_OFFSET);
 
         util_spawn_bullet(b_x, b_y, true, 600, debug_weapon.bullet_sprite, bdir, 4, 1, true);
-        player.max_speed = 100;
+        player.max_speed = PLAYER_SHOOT_SPEED_PENALTY;
         return true;
     },
     event_stopattack : () =>
@@ -454,8 +460,6 @@ const event_load_complete = () =>
     state.resources.stone.pattern = canvas.context.createPattern(state.resources.stone.sprite, 'repeat');
     debug_weapon.bullet_sprite = state.resources.bullet.sprite;
 
-    util_spawn_enemy_zombie(200, 200, 3, 50);
-
     // Spawn a bunch of graves
     for (let i = 0; i < GRAVES_N_SPAWN; ++i)
     {
@@ -656,7 +660,16 @@ const event_update = (ratio) =>
 
         ++i;
     });
+    
+    if (state.interval > state.next_spawn)
+    {
+        state.next_spawn = state.interval + ZOMBIE_SPAWN_INTERVAL;
+        if (util_rand_num(0, 100) < ZOMBIE_SPAWN_CHANCE)
+            return;
 
+        const spawn_grave = graves[util_rand_num(0, graves.length)];
+        util_spawn_enemy_zombie(spawn_grave.x, spawn_grave.y, util_rand_num(2, 6), util_rand_num(20, 80));
+    }
 };
 
 let prev = Date.now();
