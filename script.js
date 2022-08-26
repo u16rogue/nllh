@@ -29,6 +29,8 @@ const ZOMBIE_SPAWN_INTERVAL = 600;
 const ZOMBIE_SPAWN_CHANCE   = 100 - 80;
 const ZOMBIE_BITE_CONFIRM_INTERVAL = 300; // time it takes for the player to be in the attack radius before we dish out damage
 
+const DAMAGE_COVER_INTERVAL = 100;
+
 const $ = (id, action = null) =>
 {
     let obj = document.getElementById(id) ?? document.getElementsByClassName(id);
@@ -50,7 +52,8 @@ let state = {
         m2      : false,
     },
     keys : {},
-    pause : false,
+    pause : true,
+    fresh : true,
     next_spawn : 0,
     resources : {
         dirt : {
@@ -262,6 +265,8 @@ const reset_state = () =>
     state.interval = 0;
     state.next_spawn = 0;
     player.kills = 0;
+    player.last_damage = 0;
+    debug_weapon.next_shot = 0; 
 }
 
 let player = {
@@ -281,6 +286,7 @@ let player = {
         }, 
     },
     hp     : 3,
+    last_damage : -DAMAGE_COVER_INTERVAL - 1,
     kills  : 0,
     x      : 0,
     y      : 0,
@@ -536,6 +542,9 @@ const event_load_complete = () =>
     }
 
     /*if (DEBUG)*/ player.weapon = debug_weapon;
+
+
+    alert('WARNING: Contains flashing red light!\nW A S D - Move\nLMB - Shoot\nMouse Pointer - Aim\nESC - Pause');
 };
 
 const event_render = () =>
@@ -612,6 +621,19 @@ const event_render = () =>
             canvas.context.arc(bullet.position.x, bullet.position.y, bullet.hitradius, 0, 360);
             canvas.context.stroke();
         });
+    }
+
+    // Render damage indicator
+    const dmg_end = player.last_damage + DAMAGE_COVER_INTERVAL;
+    if (dmg_end > state.interval)
+    {
+        canvas.context.save();
+        canvas.context.fillStyle = `rgb(255, 0, 0)`;
+        canvas.context.globalAlpha = ((dmg_end - state.interval) / DAMAGE_COVER_INTERVAL);
+        if (canvas.context.globalAlpha > 0.5)
+            canvas.context.globalAlpha = 0.5;
+        canvas.context.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+        canvas.context.restore();
     }
 
     // Render text
@@ -701,6 +723,7 @@ const event_update = (ratio) =>
         if (in_attack_dist && state.interval > enemy.confirm_bite)
         {
             --player.hp;
+            player.last_damage = state.interval;
             enemy.confirm_bite = state.interval + ZOMBIE_BITE_CONFIRM_INTERVAL * 2; // prevent damage stacking
         }
 
@@ -721,7 +744,7 @@ const event_update = (ratio) =>
             return;
 
         const spawn_grave = graves[util_rand_num(0, graves.length)];
-        util_spawn_enemy_zombie(spawn_grave.x, spawn_grave.y, util_rand_num(2, 6), util_rand_num(60, 120));
+        util_spawn_enemy_zombie(spawn_grave.x, spawn_grave.y, util_rand_num(2, 6), util_rand_num(60, 150));
     }
 };
 
@@ -776,6 +799,12 @@ $('jswarning', (d) =>
 
     addEventListener('keydown', (e) =>
     {
+        if (state.fresh)
+        {
+            state.pause = false;
+            state.fresh = false;
+        }
+
         if (e.key == 'Escape')
         {
             state.pause = !state.pause;
