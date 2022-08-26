@@ -61,7 +61,10 @@ let state = {
         },
         dead : {
             sprites : {
-                base : new Image()
+                base : new Image(),
+                arm_l : new Image(),
+                arm_r : new Image(),
+                walk_cycle : []
             }
         }
     },
@@ -169,6 +172,43 @@ const util_spawn_enemy = (x_, y_, hp_, speed_, collission_radius_, attack_radius
         collission_radius : collission_radius_,
         attack_radius : attack_radius_,
         render : cb_render_,
+    });
+};
+
+const util_spawn_enemy_zombie = (x_, y_, hp_, speed_) =>
+{
+    util_spawn_enemy(x_, y_, hp_, speed_, 20, 26, (self) => {
+        const swh = state.resources.dead.sprites.base.width  / 2;
+        const shh = state.resources.dead.sprites.base.height / 2;
+        let s_abs = {
+            x : self.x - swh,
+            y : self.y - shh,
+        };
+        
+        // leg cycle render
+        canvas.context.drawImage(state.resources.dead.sprites.walk_cycle[Math.floor(state.interval % LEG_CYCLE_TIME / (LEG_CYCLE_TIME / state.resources.dead.sprites.walk_cycle.length))], s_abs.x, s_abs.y);
+
+        canvas.context.drawImage(state.resources.dead.sprites.base, s_abs.x, s_abs.y);
+        
+        // eye tracker
+        let e2p_vun = util_math_normalize_towards(s_abs, player);
+        canvas.context.drawImage(player.sprites.eyes, s_abs.x + (e2p_vun.x * EYE_TRACK_DIFF), s_abs.y + (e2p_vun.y * EYE_TRACK_DIFF));
+
+        const deg = util_math_vun_to_deg(e2p_vun);
+
+        // arm tracker left
+        canvas.context.save();
+        canvas.context.translate(self.x - swh / 4, self.y + shh / 4);
+        canvas.context.rotate(-deg * Math.PI / 180);
+        canvas.context.drawImage(state.resources.dead.sprites.arm_l, -swh, -shh);
+        canvas.context.restore();
+
+        // arm tracker right
+        canvas.context.save();
+        canvas.context.translate(self.x + swh / 4, self.y + shh / 4);
+        canvas.context.rotate(-deg * Math.PI / 180);
+        canvas.context.drawImage(state.resources.dead.sprites.arm_r, -swh, -shh);
+        canvas.context.restore();
     });
 };
 
@@ -414,16 +454,7 @@ const event_load_complete = () =>
     state.resources.stone.pattern = canvas.context.createPattern(state.resources.stone.sprite, 'repeat');
     debug_weapon.bullet_sprite = state.resources.bullet.sprite;
 
-    util_spawn_enemy(200, 200, 3, 0, 20, 26, (self) => {
-        let s_abs = {
-            x : self.x - state.resources.dead.sprites.base.width  / 2,
-            y : self.y - state.resources.dead.sprites.base.height / 2,
-        };
-        canvas.context.drawImage(state.resources.dead.sprites.base, s_abs.x, s_abs.y);
-        
-        let e2p_vun = util_math_normalize_towards(s_abs, player);
-        canvas.context.drawImage(player.sprites.eyes, s_abs.x + (e2p_vun.x * EYE_TRACK_DIFF), s_abs.y + (e2p_vun.y * EYE_TRACK_DIFF));
-    });
+    util_spawn_enemy_zombie(200, 200, 3, 0);
 
     // Spawn a bunch of graves
     for (let i = 0; i < GRAVES_N_SPAWN; ++i)
@@ -475,7 +506,7 @@ const event_load_complete = () =>
         );
     }
 
-    if (DEBUG) player.weapon = debug_weapon;
+    /*if (DEBUG)*/ player.weapon = debug_weapon;
 };
 
 const event_render = () =>
@@ -630,7 +661,7 @@ const event_game_loop = () =>
     window.requestAnimationFrame(event_game_loop);
 };
 
-const PROGRESS_TOTAL = 19;
+const PROGRESS_TOTAL = 23;
 let   load_progress  = 0;
 let   has_loaded     = false;
 
@@ -762,6 +793,20 @@ $('jswarning', (d) =>
 
     state.resources.dead.sprites.base.onload = commit_progress;
     state.resources.dead.sprites.base.src = './assets/sprites/dead_base.png';
+
+    state.resources.dead.sprites.arm_l.onload = commit_progress;
+    state.resources.dead.sprites.arm_l.src = './assets/sprites/dead_arm_l.png';
+
+    state.resources.dead.sprites.arm_r.onload = commit_progress;
+    state.resources.dead.sprites.arm_r.src = './assets/sprites/dead_arm_r.png';
+
+    for (let i = 0; i < 2; ++i)
+    {
+        let legw = new Image();
+        legw.onload = commit_progress;
+        legw.src = `./assets/sprites/dead_walk_${i}.png`;
+        state.resources.dead.sprites.walk_cycle.push(legw);
+    }
 
     // Wait for everything to load then Trigger event loop
     console.log('Waiting for everything to load...');
