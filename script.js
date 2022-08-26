@@ -156,7 +156,7 @@ const util_create_enemy_spawn_point = (x_, y_, sprite_, callback_should_spawn_) 
     });
 };
 
-const util_spawn_enemy = (x_, y_, sprite_base_, hp_, speed_, collission_radius_) =>
+const util_spawn_enemy = (x_, y_, sprite_base_, hp_, speed_, collission_radius_, attack_radius_) =>
 {
     enemies.push({
         x : x_,
@@ -167,6 +167,7 @@ const util_spawn_enemy = (x_, y_, sprite_base_, hp_, speed_, collission_radius_)
         hp : hp_,
         speed : speed_,
         collission_radius : collission_radius_,
+        attack_radius : attack_radius_,
     });
 };
 
@@ -349,14 +350,28 @@ let player = {
         else if (player.speed < player.min_speed)
             player.speed = player.min_speed;
 
-        // Grave collission
         let has_collide = false;
+
+        // Grave collision
         for (let grave of graves)
         {
             if (util_math_distance({ x: n_x, y : n_y }, grave) < GRAVE_COLLISION_RADIUS)
             {
                 has_collide = true;
                 break;
+            }
+        }
+
+        // Player to enemy collision
+        if (!has_collide)
+        {
+            for (let enemy of enemies)
+            {
+                if (util_math_distance({ x: n_x, y : n_y }, enemy) < enemy.collission_radius)
+                {
+                    has_collide = true;
+                    break;
+                }   
             }
         }
 
@@ -399,7 +414,7 @@ const event_load_complete = () =>
     state.resources.stone.pattern = canvas.context.createPattern(state.resources.stone.sprite, 'repeat');
     debug_weapon.bullet_sprite = state.resources.bullet.sprite;
 
-    util_spawn_enemy(200, 200, state.resources.dead.sprites.base, 1, 0, 26);
+    util_spawn_enemy(200, 200, state.resources.dead.sprites.base, 1, 0, 20, 26);
 
     // Spawn a bunch of graves
     for (let i = 0; i < GRAVES_N_SPAWN; ++i)
@@ -514,6 +529,19 @@ const event_render = () =>
         graves.forEach(grave => {
             canvas.context.beginPath();
             canvas.context.arc(grave.x, grave.y, GRAVE_COLLISION_RADIUS, 0, 360);
+            canvas.context.stroke();
+        });
+
+        enemies.forEach(enemy => {
+            canvas.context.beginPath();
+            canvas.context.arc(enemy.x, enemy.y, enemy.collission_radius, 0, 360);
+            canvas.context.arc(enemy.x, enemy.y, enemy.attack_radius, 0, 360);
+            canvas.context.stroke();
+        });
+
+        bullets.forEach(bullet => {
+            canvas.context.beginPath();
+            canvas.context.arc(bullet.position.x, bullet.position.y, bullet.hitradius, 0, 360);
             canvas.context.stroke();
         });
     }
