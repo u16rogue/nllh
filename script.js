@@ -176,10 +176,12 @@ let debug_weapon = {
         const b_y = player.y + debug_weapon.offset.y + (bdir.y * BULLET_SPAWN_OFFSET);
 
         util_spawn_bullet(b_x, b_y, true, 600, debug_weapon.bullet_sprite, bdir, 4, true);
+        player.max_speed = 100;
         return true;
     },
     event_stopattack : () =>
     {
+        player.max_speed = 300;
         return true;
     },
 };
@@ -385,9 +387,9 @@ const event_load_complete = () =>
     for (let i = 0; i < GRAVES_N_SPAWN; ++i)
     {
         const GRAVE_SIZE = 64; // dumb magic number but idk how to properly implement this incase we have diff grave sizes but for now it'll work
-        const min_x = 100 + STONE_WALL_THICKNESS + GRAVE_SIZE;
+        const min_x = STONE_WALL_THICKNESS + GRAVE_SIZE;
         const max_x = canvas.element.width - STONE_WALL_THICKNESS - GRAVE_SIZE;
-        const min_y = 100 + min_x;
+        const min_y = min_x;
         const max_y = canvas.element.height - STONE_WALL_THICKNESS - GRAVE_SIZE;
 
         let cx = 0;
