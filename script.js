@@ -921,17 +921,17 @@ $('jswarning', (d) =>
         state.keys[e.key] = true;
     });
     addEventListener('keyup', (e) => { delete state.keys[e.key]; });
-    document.body.onmousedown = (e) =>
+    addEventListener('pointerdown', (e) =>
     {
         if (e.button == 0)
             state.mouse.m1 = true;
-    };
-    document.body.onmouseup = (e) =>
+    });
+    addEventListener('pointerup', (e) =>
     {
         if (e.button == 0)
             state.mouse.m1 = false;
-    };
-    addEventListener('mousemove', (e) =>
+    });
+    addEventListener('pointermove', (e) =>
     {
         const bcr = canvas.element.getBoundingClientRect();
         const n_x = e.clientX - bcr.left;
