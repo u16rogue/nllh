@@ -29,7 +29,7 @@ const ZOMBIE_SPAWN_INTERVAL = 600;
 const ZOMBIE_SPAWN_CHANCE   = 100 - 80;
 const ZOMBIE_BITE_CONFIRM_INTERVAL = 300; // time it takes for the player to be in the attack radius before we dish out damage
 
-const DAMAGE_COVER_INTERVAL = 100;
+const DAMAGE_COVER_INTERVAL = 100; // How long will the red overlay damage indicator
 
 const $ = (id, action = null) =>
 {
@@ -97,6 +97,16 @@ const util_in_canvas_bound = (x, y) =>
         && x <= (canvas.element.width - STONE_WALL_THICKNESS - STONE_WALL_LEISURE)
         && y >= (0 + STONE_WALL_THICKNESS + STONE_WALL_LEISURE)
         && y <= (canvas.element.height - STONE_WALL_THICKNESS + STONE_WALL_LEISURE);
+};
+
+const util_math_easeincirc = (r) =>
+{
+    return 1 - Math.sqrt(1 - Math.pow(r, 2));
+};
+
+const util_math_easeinsine = (r) =>
+{
+     return 1 - Math.cos((r * Math.PI) / 2);
 };
 
 const util_math_distance = (p1, p2) =>
@@ -406,7 +416,6 @@ let player = {
 
         player.sprites.hairband.sprite = player.sprites.hairband.cycle[Math.floor((state.interval % player.hairband_cycle_time / (player.hairband_cycle_time / player.sprites.hairband.cycle.length)))];
 
-        // TODO: should prolly use some linear smoothing for this
         // TODO: deaccel is broken
         const acc_delta = player.max_speed - player.min_speed;
         let goal_ratio = (state.interval - player.last_move) / player.accelerate_time_ms;
@@ -414,10 +423,11 @@ let player = {
             goal_ratio = 1.0;
         if (has_moved && player.speed != player.max_speed) // if we're not in the speed cap and we're moving start accelerating
         {
-            player.speed = player.min_speed + (acc_delta * goal_ratio);
+            player.speed = player.min_speed + (acc_delta * util_math_easeinsine(goal_ratio));
         }
         else if (!has_moved && player.speed != player.min_speed) // if we're no longer moving but still have some acceleration, start decreasing
         { 
+            // easeInCirc
             player.speed = player.min_speed + (acc_delta * (1.0 - goal_ratio));
         }
 
