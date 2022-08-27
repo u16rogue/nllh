@@ -891,6 +891,7 @@ $('jswarning', (d) =>
 
     // Create canvas - http://www.lostdecadegames.com/how-to-make-a-simple-html5-canvas-game/ 
     canvas.element = document.createElement('canvas');
+    canvas.element.addEventListener('contextmenu', e => { e.preventDefault() });
     canvas.context = canvas.element.getContext('2d');
 
     canvas.element.width  = CANVAS_WIDTH;
