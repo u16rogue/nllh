@@ -2,7 +2,7 @@
 // TODO: refactor. should use classes and separate everything in their own JS
 // TODO: refactor. object management should be proper
 
-let DEBUG = true;
+let DEBUG = false;
 
 const CANVAS_WIDTH  = 800;
 const CANVAS_HEIGHT = 600;
