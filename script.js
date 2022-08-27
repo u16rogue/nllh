@@ -4,6 +4,8 @@
 
 let DEBUG = false;
 
+const TIME_DIFFICULTY_SCALE = 20000;
+
 const CANVAS_WIDTH  = 800;
 const CANVAS_HEIGHT = 600;
 
@@ -144,6 +146,16 @@ const util_math_forward_towards = (p1, p2, distance) =>
 const util_math_vun_to_deg = (p) =>
 {
     return Math.atan2(p.x, p.y) * 180 / Math.PI;
+};
+
+const util_clamp = (n, min, max) =>
+{
+    if (n < min)
+        return min;
+    else if (n > max)
+        return max;
+
+    return n;
 };
 
 const util_math_degrees_to_dirvec = (d) =>
@@ -815,7 +827,8 @@ const event_update = (ratio) =>
     if (state.interval > state.next_spawn && (ZOMBIE_MAX_SPAWN == -1 || enemies.length < ZOMBIE_MAX_SPAWN))
     {
         state.next_spawn = state.interval + ZOMBIE_SPAWN_INTERVAL;
-        if (util_rand_num(0, 100) < ZOMBIE_SPAWN_CHANCE)
+        const raw_difficulty_index = state.interval / TIME_DIFFICULTY_SCALE;
+        if (util_rand_num(0, 100) < ZOMBIE_SPAWN_CHANCE - util_clamp(raw_difficulty_index, 0, 25))
             return;
 
         const spawn_grave = graves[util_rand_num(0, graves.length)];
@@ -830,7 +843,9 @@ const event_update = (ratio) =>
         }
 
         if (!has_collision)
-            util_spawn_enemy_zombie(spawn_grave.x, spawn_grave.y, util_rand_num(2, 6), util_rand_num(60, 150));
+        {
+           util_spawn_enemy_zombie(spawn_grave.x, spawn_grave.y, util_rand_num(1, 1 + util_clamp(raw_difficulty_index, 0, 8)), util_rand_num(60, 80 + util_clamp(raw_difficulty_index, 0, 50)));
+        }
     }
 };
 
