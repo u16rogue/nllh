@@ -2,7 +2,7 @@
 // TODO: refactor. should use classes and separate everything in their own JS
 // TODO: refactor. object management should be proper
 
-const DEBUG = false;
+let DEBUG = true;
 
 const CANVAS_WIDTH  = 800;
 const CANVAS_HEIGHT = 600;
@@ -144,6 +144,23 @@ const util_math_forward_towards = (p1, p2, distance) =>
 const util_math_vun_to_deg = (p) =>
 {
     return Math.atan2(p.x, p.y) * 180 / Math.PI;
+};
+
+const util_math_degrees_to_dirvec = (d) =>
+{
+    const rads = d * Math.PI / 180.0;
+    return {
+        x : Math.cos(rads),
+        y : Math.sin(rads)
+    };
+};
+
+const util_math_forward_normal = (p, n, dist) => 
+{
+    return {
+        x : p.x + (n.x * dist),
+        y : p.y + (n.y * dist)
+    };
 };
 
 const util_rand_num = (low, high) =>
@@ -715,7 +732,8 @@ const event_update = (ratio) =>
         }
 
         // Follow player
-        const np = util_math_forward_towards(enemy, player, enemy.speed * ratio);
+        let np = util_math_normalize_towards(enemy, player);
+        const ENEMY_DISTANCE = enemy.speed * ratio;
 
         // Check for bite
         let in_attack_dist = false;
@@ -737,14 +755,61 @@ const event_update = (ratio) =>
             enemy.confirm_bite = state.interval + ZOMBIE_BITE_CONFIRM_INTERVAL * 2; // prevent damage stacking
         }
 
+        ++i;
+
         // Dont 'swallow' the player by checking bound
-        if (util_math_distance(np, player) < enemy.collission_radius)
+        if (util_math_distance(util_math_forward_normal(enemy, np, ENEMY_DISTANCE), player) < enemy.collission_radius)
             return;
 
-        enemy.x = np.x;
-        enemy.y = np.y;
+        // Dont collide with others and if so try and find a diff way
+        const does_collide_with_others = (n) => {
+            for (let other of enemies)
+            {
+                if (other == enemy)
+                    continue;
 
-        ++i;
+                if (util_math_distance(util_math_forward_normal(enemy, n, ENEMY_DISTANCE), other) <= other.collission_radius + enemy.collission_radius)
+                {
+                    return true;
+                }
+            }
+            return false;
+        };
+
+        let has_collided2 = does_collide_with_others(np);
+        
+        // find a different path
+        if (has_collided2)
+        {
+            let np_degrees = -util_math_vun_to_deg(np);
+            np = util_math_degrees_to_dirvec(np_degrees + 30);
+            has_collided2 = does_collide_with_others(np);
+            if (has_collided2)
+            {
+                np = util_math_degrees_to_dirvec(np_degrees - 30);
+                has_collided2 = does_collide_with_others(np);
+            }
+        }
+
+        if (!has_collided2)
+        {
+            if (DEBUG)
+            {
+                canvas.context.fillStyle = "rgb(255, 255, 255)";
+                canvas.context.strokeStyle = "rgb(255, 255, 255)";
+    
+                canvas.context.beginPath();
+                canvas.context.moveTo(enemy.x, enemy.y);
+                const test_dir = util_math_forward_normal(enemy, np, 80);
+                canvas.context.lineTo(test_dir.x, test_dir.y);
+                canvas.context.closePath();
+                canvas.context.stroke();
+            }
+            np = util_math_forward_normal(enemy, np, ENEMY_DISTANCE);
+            enemy.x = np.x;
+            enemy.y = np.y;
+        }
+
     });
     
     if (state.interval > state.next_spawn && (ZOMBIE_MAX_SPAWN == -1 || enemies.length < ZOMBIE_MAX_SPAWN))
@@ -754,7 +819,18 @@ const event_update = (ratio) =>
             return;
 
         const spawn_grave = graves[util_rand_num(0, graves.length)];
-        util_spawn_enemy_zombie(spawn_grave.x, spawn_grave.y, util_rand_num(2, 6), util_rand_num(60, 150));
+        let has_collision = false;
+        for (let enemy of enemies)
+        {
+            if (util_math_distance(spawn_grave, enemy) < GRAVE_COLLISION_RADIUS + enemy.collission_radius)
+            {
+                has_collision = true;
+                break;
+            }
+        }
+
+        if (!has_collision)
+            util_spawn_enemy_zombie(spawn_grave.x, spawn_grave.y, util_rand_num(2, 6), util_rand_num(60, 150));
     }
 };
 
@@ -763,13 +839,12 @@ const event_game_loop = () =>
 {
     const now   = Date.now();
     const delta = now - prev;
+    event_render();
     if (!state.pause)
     {
         state.interval += delta;
         event_update(delta / 1000);
     }
-
-    event_render();
     prev = now;
     window.requestAnimationFrame(event_game_loop);
 };
@@ -809,6 +884,11 @@ $('jswarning', (d) =>
 
     addEventListener('keydown', (e) =>
     {
+        if (e.key == 'Pause')
+        {
+            DEBUG = !DEBUG;
+        }
+
         if (state.fresh)
         {
             state.pause = false;
