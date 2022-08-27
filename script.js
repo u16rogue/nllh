@@ -306,6 +306,7 @@ const reset_state = () =>
     player.kills = 0;
     player.last_damage = 0;
     debug_weapon.next_shot = 0; 
+    state.mouse.m1 = false;
 }
 
 let player = {
