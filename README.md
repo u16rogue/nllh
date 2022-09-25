@@ -4,5 +4,3 @@ A small game made for an informal [game jam](https://github.com/NanahiraCommunit
 ## Credits
 * Background used for the website was made by IjalRamd from the Nanahira Fan Server discord.
 * Font used is "[Visitor font](https://www.dafont.com/visitor.font)" by Brian Kent
-
-*code is bad yes, thanks*
